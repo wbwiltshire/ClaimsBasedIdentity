@@ -1,0 +1,24 @@
+﻿@using System.Linq;
+@using ClaimsBasedIdentity.Web.UI.Identity;
+@using System.Security.Claims; 
+
+	<ul class="navbar-nav">
+		@if (Context.User.Identity.IsAuthenticated) {
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">@Context.User.Identity.Name</a>
+				<div class="dropdown-menu" aria-labelledby="navbarUser">
+					<a class="dropdown-item" href="/Account/UserProfile/@Context.User.Identity.UserId()">Profile</a>
+					<a id="logout" class="dropdown-item" href="#">Logout</a>
+				</div>
+			</li>
+		}
+		else {
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarLogin" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">User</a>
+				<div class="dropdown-menu" aria-labelledby="navbarLogin">
+					<a class="dropdown-item" href="/Account/LoginRegister?action=login">Login</a>
+					<a class="dropdown-item" href="/Account/LoginRegister?action=register">Register</a>
+				</div>
+			</li>
+		}
+	</ul>

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>ClaimsBasedIdentity.Data.Repository</AssemblyName>
+    <RootNamespace>ClaimsBasedIdentity.Data.Repository</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\POCO\POCO.csproj" />
+  </ItemGroup>
+
+</Project>
