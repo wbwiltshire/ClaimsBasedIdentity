@@ -36,7 +36,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 
                     //Returns an object, not an int
                     logger.LogInformation("FindAllCount complete.");
-                    return (int)dbc.Query<TEntity>().Count;
+                    return (int)dbc.Select<TEntity>().Count;
             }
             catch (Exception ex)
             {
@@ -57,7 +57,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 
                     ICollection<TEntity> entities = new List<TEntity>();
                     logger.LogInformation($"FindAll complete for {typeof(TEntity)} entity.");
-                    return dbc.Query<TEntity>();
+                    return dbc.Select<TEntity>();
             }
             catch (Exception ex)
             {

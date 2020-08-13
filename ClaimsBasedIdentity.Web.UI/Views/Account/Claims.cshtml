@@ -1,0 +1,36 @@
+﻿@using System.Security.Claims
+@{
+	ViewData["Title"] = "View User Claims";
+}
+
+<div class="row">
+	<div class="col-md-12">
+		<h4>@ViewData["Title"]</h4>
+	</div>
+</div>
+
+<br />
+
+<div class="row">
+	<div class="col-md-12">
+		<table class="table table-striped tabled-bordered table-sm table-hover">
+			<thead>
+				<tr>
+					<th id="Type">Type</th>
+					<th id="Value">Value</th>
+					<th id="Issuer">Issuer</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (Claim claim in User.Claims)
+				{
+					<tr>
+						<td>@claim.Type.Trim()</td>
+						<td>@claim.Value</td>
+						<td>@claim.Issuer</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>

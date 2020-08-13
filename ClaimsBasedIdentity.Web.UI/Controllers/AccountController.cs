@@ -49,8 +49,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		{
 			//ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUserRepository userRepo = null;
+			ApplicationUserClaimRepository userClaimsRepo = null;
 			ApplicationUser user = null;
-			IList<Claim> claims = new List<Claim>();
 			ClaimsIdentity userIdentity = null;
 			ClaimsPrincipal userPrincipal = null;
 			bool valid = false;
@@ -60,9 +60,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			{
 				if (ModelState.IsValid)
 				{
+					userRepo = new ApplicationUserRepository(settings, logger, dbc);
+					userClaimsRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
 
 					// Find user in database and validate there password				
-					userRepo = new ApplicationUserRepository(settings, logger, dbc);
 					user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == login.UserName.ToUpper());
 					if (user != null)
 					{
@@ -70,14 +71,16 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						// Build the user Identity context, if they are validated
 						if (valid)
 						{
-
-							// Build User Identity from claims in the database
+							// Build User Identity
 							userIdentity = new ClaimsIdentity("LocalIdentity");
-							claims.Add(new Claim(ClaimTypes.Name, user.UserName, ClaimValueTypes.String, issuer));
-							claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(), ClaimValueTypes.Integer32, issuer));
+							userIdentity.AddClaim(new Claim(ClaimTypes.Name, user.UserName, ClaimValueTypes.String, issuer));
+							userIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(), ClaimValueTypes.Integer32, issuer));
 
-							// Build User Security Principal
-							userIdentity.AddClaims(claims);
+							// Add claims from the database
+							foreach (ApplicationUserClaim c in userClaimsRepo.FindAll().Where(c => c.UserId == user.Id))
+								userIdentity.AddClaim(new Claim(c.ClaimType, c.ClaimValue, ClaimValueTypes.String, c.ClaimIssuer));
+							
+							// Build User Security Principal from the Identity Principal
 							userPrincipal = new ClaimsPrincipal(userIdentity);
 
 							// Sign In User
@@ -124,6 +127,13 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 			HttpContext.SignOutAsync();
 			return Json(redirectUrl);
+		}
+
+		[HttpGet]
+		[Route("/[controller]/Claims")]
+		public IActionResult Claims()
+		{
+			return View();
 		}
 
 		[AllowAnonymous]

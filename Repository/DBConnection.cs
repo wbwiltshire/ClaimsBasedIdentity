@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Security.Claims;
 using System.Text;
 using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.POCO;
@@ -10,7 +11,7 @@ namespace ClaimsBasedIdentity.Data.Repository
     public class DBConnection : IDBConnection
     {
         private ICollection<ApplicationUser> users = null;
-
+        private ICollection<ApplicationUserClaim> userClaims = null;
         public DBConnection()
         {
             IsOpen = false;
@@ -30,10 +31,12 @@ namespace ClaimsBasedIdentity.Data.Repository
 
         public bool IsOpen { get; set; }
 
-        public ICollection<TEntity> Query<TEntity>()
+        public ICollection<TEntity> Select<TEntity>()
         {
             if (typeof(TEntity) == typeof(ApplicationUser))
                 return (ICollection<TEntity>)users;
+            else if (typeof(TEntity) == typeof(ApplicationUserClaim))
+                return (ICollection<TEntity>)userClaims;
             else
                 return null;
         }
@@ -59,6 +62,32 @@ namespace ClaimsBasedIdentity.Data.Repository
                 ModifiedDt = DateTime.Now,
                 CreateDt = DateTime.Now
             });
+
+            userClaims = new List<ApplicationUserClaim>();
+            userClaims.Add(new ApplicationUserClaim() { 
+                Id = 1,
+                UserId = 1,
+                Name = "Role",
+                ClaimType = ClaimTypes.Role,
+                ClaimValue = "Administrator",
+                ClaimIssuer = "Local Authority",
+                Active = true,
+                ModifiedDt = DateTime.Now,
+                CreateDt = DateTime.Now
+            });
+            userClaims.Add(new ApplicationUserClaim()
+            {
+                Id = 2,
+                UserId = 1,
+                Name = "DOB",
+                ClaimType = ClaimTypes.DateOfBirth,
+                ClaimValue = "1900-01-01 00:00:00.000",
+                ClaimIssuer = "Local Authority",
+                Active = true,
+                ModifiedDt = DateTime.Now,
+                CreateDt = DateTime.Now
+            });
+
         }
     }
 }
