@@ -9,6 +9,7 @@ using ClaimsBasedIdentity.Data.POCO;
 
 namespace ClaimsBasedIdentity.Data.Repository
 {
+    // A very primitive InMemory Data Store
     public class DBConnection : IDBConnection
     {
         private ICollection<ApplicationUser> users = null;
@@ -46,7 +47,7 @@ namespace ClaimsBasedIdentity.Data.Repository
                 return null;
         }
 
-        public object SelectByPK<TEntity>(IPrimaryKey key)
+        public object Select<TEntity>(IPrimaryKey key)
         {
             if (typeof(TEntity) == typeof(ApplicationUser))
                 return users.FirstOrDefault(u => (int)u.PK.Key == (int)key.Key);

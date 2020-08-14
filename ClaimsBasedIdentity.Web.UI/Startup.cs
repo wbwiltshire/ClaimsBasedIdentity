@@ -37,9 +37,11 @@ namespace ClaimsBasedIdentity.Web.UI
             services.AddOptions();
             services.Configure<AppSettingsConfiguration>(Configuration);
 
+            // Needed by IsAuthorized Custom Authorization Policy
+            services.AddHttpContextAccessor();                                      
             // Initiliaze Data Repository
-            services.AddHttpContextAccessor();                                      // Needed by IsAuthorized Custom Authorization Policy
             services.AddSingleton<IDBConnection, DBConnection>();
+            // Custom Authorization Policy Handlers
             services.AddSingleton<IAuthorizationHandler, IsAuthorizedHandler>();
             services.AddSingleton<IAuthorizationHandler, IsAdultHandler>();
 
@@ -66,7 +68,7 @@ namespace ClaimsBasedIdentity.Web.UI
                 config.AddPolicy("ITDepartment", policy =>                          // Simple claims policy
                     policy.RequireClaim("Department", new string[] { "IT" })
                 );
-                config.AddPolicy("IsAdult", policy =>                          // Customer policy
+                config.AddPolicy("IsAdult", policy =>                               // Customer policy
                     policy.Requirements.Add(new IsAdultRequirement(21))
                 );
             });

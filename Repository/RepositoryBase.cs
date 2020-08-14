@@ -97,7 +97,7 @@ namespace ClaimsBasedIdentity.Data.Repository
                 if (!dbc.IsOpen)
                     dbc.Open();
 
-                entity = (TEntity)dbc.SelectByPK<TEntity>(pk);
+                entity = (TEntity)dbc.Select<TEntity>(pk);
                 logger.LogInformation($"FindByPK complete for {typeof(TEntity)} entity.");
             }
             catch (Exception ex)
@@ -109,6 +109,7 @@ namespace ClaimsBasedIdentity.Data.Repository
             return entity;
         }
         #endregion
+
         #region Add
         protected object Add(TEntity entity, PrimaryKey pk)
         {

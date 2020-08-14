@@ -43,7 +43,7 @@ namespace ClaimsBasedIdentity.Data.Repository
             throw new NotImplementedException();
         }
 
-        public ApplicationUserClaim FindByPK(IPrimaryKey pk)
+        public override ApplicationUserClaim FindByPK(IPrimaryKey pk)
         {
             throw new NotImplementedException();
         }

@@ -43,7 +43,7 @@ namespace ClaimsBasedIdentity.Data.Repository
             throw new NotImplementedException();
         }
 
-        public ApplicationControllerSecurity FindByPK(IPrimaryKey pk)
+        public override ApplicationControllerSecurity FindByPK(IPrimaryKey pk)
         {
             throw new NotImplementedException();
         }
