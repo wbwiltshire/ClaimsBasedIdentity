@@ -23,6 +23,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
             settings = s.Value;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View();
@@ -44,6 +46,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
             return View();
         }
 
+        [HttpGet]
+        [AllowAnonymous]
         public IActionResult About()
         {
             return View();

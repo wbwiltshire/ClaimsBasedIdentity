@@ -33,6 +33,91 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			dbc = (DBConnection)d;
 		}
 
+		#region /Account/Index
+		// GET: /Account/
+		[HttpGet]
+		[Authorize(Policy = "IsAuthorized")]
+		[Route("/[controller]/Index")]
+		public IActionResult Index()
+		{
+			ApplicationUserRepository userRepo;
+			IPager<ApplicationUser> pager = null;
+
+			try
+			{
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+				pager = userRepo.FindAll(new Pager<ApplicationUser>() { PageNbr = 0, PageSize = 20 });
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex.Message);
+			}
+
+			return View(pager);
+		}
+		#endregion
+
+		#region /Account/UserProfile
+		//GET: /Account/UserProfile/{id}
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/UserProfile/{id:int}")]
+		public IActionResult UserProfile(int id)
+		{
+			ApplicationUserRepository userRepo;
+			//ApplicationUserRoleRepository userRoleRepo;
+			ApplicationUser user = null;
+
+			try
+			{
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+				//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
+
+				user = userRepo.FindByPK(new PrimaryKey() { Key = id, IsIdentity = true });
+				//user.Roles = new List<ApplicationRole>();
+				//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
+				//	user.Roles.Add(ur.ApplicationRole);
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+			return View("UserProfile", user);
+		}
+		#endregion
+
+		#region /Account/UserDetails
+		//GET: /Account/UserDetails/{id}
+		[HttpGet]
+		[Authorize(Policy = "IsAuthorized")]
+		[Route("/[controller]/UserDetails/{id:int}")]
+		public IActionResult UserDetails(int id)
+		{
+			ApplicationUserRepository userRepo;
+			//ApplicationUserRoleRepository userRoleRepo;
+			ApplicationUser user = null;
+
+			try
+			{
+					userRepo = new ApplicationUserRepository(settings, logger, dbc);
+					//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
+
+					user = userRepo.FindByPK(new PrimaryKey() { Key = id, IsIdentity = true });
+					//user.Roles = new List<ApplicationRole>();
+					//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
+					//	user.Roles.Add(ur.ApplicationRole);
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+			return View("UserDetails", user);
+		}
+		#endregion
+
 		#region Login and Register
 		[HttpGet]
 		[AllowAnonymous]
@@ -54,7 +139,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			ClaimsIdentity userIdentity = null;
 			ClaimsPrincipal userPrincipal = null;
 			bool valid = false;
-			const string issuer = "Local Authority";
+			//const string issuer = "Local Authority";
 
 			try
 			{
@@ -73,8 +158,6 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						{
 							// Build User Identity
 							userIdentity = new ClaimsIdentity("LocalIdentity");
-							userIdentity.AddClaim(new Claim(ClaimTypes.Name, user.UserName, ClaimValueTypes.String, issuer));
-							userIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(), ClaimValueTypes.Integer32, issuer));
 
 							// Add claims from the database
 							foreach (ApplicationUserClaim c in userClaimsRepo.FindAll().Where(c => c.UserId == user.Id))
@@ -117,9 +200,113 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 			return RedirectToAction("Error");
 		}
+
+		[HttpPost]
+		[AllowAnonymous]
+		[Route("/[controller]/Register")]
+		//[ValidateAntiForgeryToken]
+		public async Task<ActionResult> Register(RegisterViewModel register)
+		{
+			ApplicationUserRepository userRepo;
+			ApplicationUserClaimRepository userClaimRepo;
+			ApplicationUser user;
+			AuthenticationProperties props = null;
+			ClaimsIdentity userIdentity = null;
+			ClaimsPrincipal userPrincipal = null;
+			const string issuer = "Local Authority";
+			int id = 0;
+
+			if (ModelState.IsValid)
+			{
+				try
+				{
+					userRepo = new ApplicationUserRepository(settings, logger, dbc);
+					userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+					user = userRepo.FindAll().FirstOrDefault(u => u.NormalizedUserName == register.UserName.ToUpper());
+
+					if (user == null)
+					{
+						user = new ApplicationUser()
+						{
+							UserName = register.UserName,
+							NormalizedUserName = register.UserName.ToUpper(),
+							Email = register.Email,
+							NormalizedEmail = register.Email.ToUpper(),
+							EmailConfirmed = true,
+							PhoneNumber = String.Empty,
+							PhoneNumberConfirmed = false,
+							TwoFactorEnabled = false,
+							DOB = DateTime.Now,
+							Department = String.Empty,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						};
+
+						// Add user to the database
+						user.PasswordHash = PasswordHash.HashPassword(register.Password);
+						id = (int)userRepo.Add(user);
+						logger.LogInformation($"Created new user account: {register.UserName}");
+
+						// Build User Identity
+						userIdentity = new ClaimsIdentity("LocalIdentity");
+						userIdentity.AddClaim(new Claim(ClaimTypes.Name, user.UserName, ClaimValueTypes.String, issuer));
+						userIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, id.ToString(), ClaimValueTypes.Integer32, issuer));
+						userIdentity.AddClaim(new Claim(ClaimTypes.Role, "Basic", ClaimValueTypes.String, issuer));
+						userIdentity.AddClaim(new Claim(ClaimTypes.DateOfBirth, user.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimValueTypes.String, issuer));
+
+						// Add User Claims to the database
+						foreach (Claim c in userIdentity.Claims)
+							userClaimRepo.Add(new ApplicationUserClaim() {
+								UserId = id,
+								ClaimType = c.Type,
+								ClaimValue = c.Value,
+								ClaimIssuer = c.Issuer,
+								Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+							});
+
+						logger.LogInformation($"Assigned default claims to new user account: {register.UserName}");
+
+						// Build User Security Principal from the Identity Principal
+						userPrincipal = new ClaimsPrincipal(userIdentity);
+
+						// Sign In User
+						await HttpContext.SignInAsync(
+							CookieAuthenticationDefaults.AuthenticationScheme,
+							userPrincipal,
+							new AuthenticationProperties()
+							{
+								IsPersistent = false
+							});
+
+						return RedirectToAction("LoginSuccess", "Home");
+					}
+					else
+					{
+						logger.LogError($"User is already registered: {register.UserName}");
+						return LocalRedirect("/Account/UserAlreadyRegistered");
+					}
+
+				}
+				catch (Exception ex)
+				{
+					logger.LogError($"Exception registering user({register.UserName}): {ex.Message}");
+					return RedirectToAction("Error");
+				}
+			}
+
+			return RedirectToAction("Error");
+		}
+
+		[HttpGet]
+		[AllowAnonymous]
+		[Route("/[controller]/UserAlreadyRegistered")]
+		public IActionResult UserAlreadyRegistered()
+		{
+			return View();
+		}
 		#endregion
 
 		[HttpPost]
+		[Authorize]
 		[Route("/[controller]/Logout")]
 		public IActionResult Logout()
 		{
@@ -130,8 +317,17 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		}
 
 		[HttpGet]
+		[Authorize]
 		[Route("/[controller]/Claims")]
 		public IActionResult Claims()
+		{
+			return View();
+		}
+
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/Forbidden")]
+		public IActionResult Forbidden()
 		{
 			return View();
 		}

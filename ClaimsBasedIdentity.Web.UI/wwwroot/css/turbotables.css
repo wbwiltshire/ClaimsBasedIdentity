@@ -1,0 +1,39 @@
+﻿/***************************************/
+/* TurboTables                         */
+/***************************************/
+.spinner {
+     display: none;
+     top: 30%;
+     left: 30%;
+     width: 300px;
+     height: 200px;
+     position: fixed;
+     z-index: 1;
+}
+
+.table-filter {
+     display: none;
+     float: left;
+}
+
+.table-filter-button {
+     /*float: right; */
+}
+
+.table-search {
+     float: right;
+     text-align: right;
+}
+
+.table-pageSizer {
+     float: right;
+     display: inline;
+}
+
+.table-pager {
+     display: inline;
+}
+
+.input-xs {
+     max-width: 60px;
+}

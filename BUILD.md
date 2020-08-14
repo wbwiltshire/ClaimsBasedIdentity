@@ -22,6 +22,7 @@ Build the Policy and Claims-Based Identity sample web application
 	* Add AddRazorRuntimeCompilation();
 	* Add Cookie Authentication
 	* Add Custom Policy / Claim Handlers
+    * Add appsettings.json
 6. Add Repository Classes
 	* Data
 	* POCO
@@ -30,17 +31,32 @@ Build the Policy and Claims-Based Identity sample web application
 	* Add key packages: Logging, 
 7. Create the Account Controller and Actions
 	* Login
-	* Register
+    * Register
 	* Logout
+    * Claims
 8. Create the Account Views
-	* Login
-	* Register
-	* Logout
-9. Create HashPassword project
-	* .Net Core 3 Console
+	* LoginRegister
+    * Claims
+9. Create the Home Views
+    * Logout
+    * InvalidCredentials
+    * LoginSuccess
+    * About 
+10. Identity Folder in Web.UI project
+    * Custom Authorization Policy class
+    * PasswordHash
+	* HttpUser extension method
 	* Add Cryptography package (Microsoft.AspNetCore.Cryptography.KeyDerivation)
-
-10. Optionally, configure you computer for self-signed certificates on localhost
+11. Create the Secret Controller, Actions, and Views
+    * Admin Secret
+    * Basic Secret
+    * Claims Secret
+    * Combo Secret
+    * GrownUp Secret
+    * Manager Secret
+    * No Role Secret
+    * No Secret
+12. Optionally, configure you computer for self-signed certificates on localhost
     * ``dotnet dev-certs https --trust``
     * This adds a self-signed certificate for <b>localhost</b> to the <b>Personal</b> certificate store on your computer
     * Note: Firefox does not use the Windows Certificate store by default

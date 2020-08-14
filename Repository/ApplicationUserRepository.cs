@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using ClaimsBasedIdentity.Data.Interfaces;
@@ -30,7 +31,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 
         public object Add(ApplicationUser entity)
         {
-            throw new NotImplementedException();
+            return base.Add(entity, new PrimaryKey() { Key = -1, IsIdentity = true });
         }
 
         public int Delete(PrimaryKey pk)
@@ -40,12 +41,14 @@ namespace ClaimsBasedIdentity.Data.Repository
 
         public IPager<ApplicationUser> FindAll(IPager<ApplicationUser> pager)
         {
-            throw new NotImplementedException();
+            pager.RowCount = base.FindAllCount();
+            pager.Entities = base.FindAllPaged(pager.PageNbr, pager.PageSize);
+            return pager;
         }
 
-        public ApplicationUser FindByPK(IPrimaryKey pk)
+        public override ApplicationUser FindByPK(IPrimaryKey pk)
         {
-            throw new NotImplementedException();
+            return base.FindByPK(pk);
         }
 
         public int Update(ApplicationUser entity)

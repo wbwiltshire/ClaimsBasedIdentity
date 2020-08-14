@@ -1,0 +1,67 @@
+﻿@using System.Security.Claims;
+@using ClaimsBasedIdentity.Data.POCO;
+@model ClaimsBasedIdentity.Data.POCO.ApplicationUser
+
+<div class="row">
+	<form id="display-content" class="col-md-6 bg-primary rounded">
+		<div>
+			<label asp-for="UserName" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.UserName):</label>
+			<label class="text-normal">@Model.UserName</label>
+		</div>
+		<div>
+			<label asp-for="Email" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.Email):</label>
+			<label class="text-normal">@Model.Email</label>
+		</div>
+		<div>
+			<label asp-for="PhoneNumber" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.PhoneNumber):</label>
+			<label class="text-normal">@Model.PhoneNumber</label>
+		</div>
+		@if ((bool)ViewData["AdminView"])
+		{
+			<div>
+				<label asp-for="EmailConfirmed" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.EmailConfirmed):</label>
+				<label class="text-normal">@Model.EmailConfirmed</label>
+			</div>
+			<div>
+				<label asp-for="PhoneNumberConfirmed" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.PhoneNumberConfirmed):</label>
+				<label class="text-normal">@Model.PhoneNumberConfirmed</label>
+			</div>
+			<div>
+				<label asp-for="TwoFactorEnabled" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.TwoFactorEnabled):</label>
+				<label class="text-normal">@Model.TwoFactorEnabled</label>
+			</div>
+		}
+		<div>
+			<label asp-for="DOB" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.DOB):</label>
+			<label class="text-normal">@Model.DOB.ToString("MM/dd/yyyy")</label>
+		</div>
+		<div>
+			<label asp-for="Department" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.Department):</label>
+			<label class="text-normal">@Model.Department</label>
+		</div>
+		<div>
+			<label asp-for="Active" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.Active):</label>
+			<label class="text-normal">@Model.Active</label>
+		</div>
+		<div>
+			<label asp-for="ModifiedDt" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.ModifiedDt):</label>
+			<label class="text-normal">@String.Format("{0:g}", Model.ModifiedDt)</label>
+		</div>
+		<div>
+			<label asp-for="CreateDt" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.CreateDt):</label>
+			<label class="text-normal">@String.Format("{0:g}", Model.CreateDt)</label>
+		</div>
+		<div>
+			<label class="col-md-3 text-right">Roles:</label>
+			<div id="tags" class="col-md-9">
+				@foreach (Claim c in Context.User.Claims)
+				{
+					if (c.Type == ClaimTypes.Role)
+					{
+						<h4><label class="text-normal"><span class="badge badge-pill badge-success">@c.Value</span></label></h4>
+					}
+				}
+			</div>
+		</div>
+	</form>
+</div>

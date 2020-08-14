@@ -7,9 +7,9 @@ using ClaimsBasedIdentity.Data.POCO;
 
 namespace ClaimsBasedIdentity.Data.Repository
 {
-    public class ApplicationUserClaimRepository : RepositoryBase<ApplicationUserClaim>, IRepository<ApplicationUserClaim>
+    public class ApplicationControllerSecurityRepository : RepositoryBase<ApplicationControllerSecurity>, IRepository<ApplicationControllerSecurity>
     {
-        public ApplicationUserClaimRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) : 
+        public ApplicationControllerSecurityRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) : 
             base(s, l, d)
         {
             Initialize(l);
@@ -20,17 +20,17 @@ namespace ClaimsBasedIdentity.Data.Repository
         private void Initialize(ILogger l)
 		{
             logger = l;
-            OrderBy = "Id,UserId";
+            OrderBy = "Id";
 		}
 
-        public override ICollection<ApplicationUserClaim> FindAll()
+        public override ICollection<ApplicationControllerSecurity> FindAll()
         {
             return base.FindAll();
         }
 
-        public object Add(ApplicationUserClaim entity)
+        public object Add(ApplicationControllerSecurity entity)
         {
-            return base.Add(entity, new PrimaryKey() { Key = -1, IsIdentity = true });
+            throw new NotImplementedException();
         }
 
         public int Delete(PrimaryKey pk)
@@ -38,17 +38,17 @@ namespace ClaimsBasedIdentity.Data.Repository
             throw new NotImplementedException();
         }
 
-        public IPager<ApplicationUserClaim> FindAll(IPager<ApplicationUserClaim> pager)
+        public IPager<ApplicationControllerSecurity> FindAll(IPager<ApplicationControllerSecurity> pager)
         {
             throw new NotImplementedException();
         }
 
-        public ApplicationUserClaim FindByPK(IPrimaryKey pk)
+        public ApplicationControllerSecurity FindByPK(IPrimaryKey pk)
         {
             throw new NotImplementedException();
         }
 
-        public int Update(ApplicationUserClaim entity)
+        public int Update(ApplicationControllerSecurity entity)
         {
             throw new NotImplementedException();
         }

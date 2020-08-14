@@ -6,25 +6,19 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using ClaimsBasedIdentity.Data;
 using ClaimsBasedIdentity.Data.Interfaces;
+using System.Globalization;
 
 namespace ClaimsBasedIdentity.Data.POCO
 {
     public class ApplicationUserClaim
     {
         public PrimaryKey PK { get; set; }
-        [Display(Name = "Claim Id")]
         public int Id
         {
-            get { return (int)PK.CompositeKey[0]; }
-            set { PK.CompositeKey[0] = (int)value; }
+            get { return (int)PK.Key; }
+            set { PK.Key = (int)value; }
         }
-        [Display(Name = "User Id")]
-        public int UserId
-        {
-            get { return (int)PK.CompositeKey[1]; }
-            set { PK.CompositeKey[1] = (int)value; }
-        }
-        public string Name { get; set; }
+        public int UserId { get; set; }
         public string ClaimType { get; set; }
         public string ClaimValue { get; set; }
         public string ClaimIssuer { get; set; }
@@ -34,12 +28,12 @@ namespace ClaimsBasedIdentity.Data.POCO
 
         public ApplicationUserClaim()
         {
-            PK = new PrimaryKey() { CompositeKey = new object[] { -1, -1 }, IsComposite = true };
+            PK = new PrimaryKey() { Key = -1, IsIdentity = true };
         }
 
         public override string ToString()
         {
-            return $"{Id}|{UserId}|{Name}|{ClaimType}|{ClaimValue}|{Active}|{ModifiedDt}|{CreateDt}|";
+            return $"{Id}|{UserId}|{ClaimType}|{ClaimValue}|{Active}|{ModifiedDt}|{CreateDt}|";
         }
 
         // Relationships

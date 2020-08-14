@@ -1,0 +1,78 @@
+﻿@using ClaimsBasedIdentity.Data
+@using ClaimsBasedIdentity.Data.Interfaces 
+@using ClaimsBasedIdentity.Data.POCO
+@model IPager<ApplicationUser>
+
+@{
+     ViewData["Title"] = "User Accounts";
+}
+<div class="row">
+     <div class="col-md-3">
+          <h4>@ViewData["Title"]</h4>
+     </div>
+</div>
+
+<div class="row">
+     <div class="col-md-12">
+          <a id="add" class="btn btn-primary btn-sm" href="/Account/Create" )>Add</a>
+          <a id="refresh" class="btn btn-primary btn-sm" href="#" )>Refresh</a>
+     </div>
+</div>
+
+<div class="row">
+     <div class="col-md-12">
+          <table id="UserTable" ctTotalItems="@Model.RowCount" class="table table-striped tabled-bordered table-sm table-hover">
+               <thead>
+                    <tr class="colHeaders">
+                         <th id="Name">Name</th>
+                         <th id="Name">Email</th>
+                         <th id="Name">Phone</th>
+                         <th id="Actions" colspan="3">Actions</th>
+                    </tr>
+               </thead>
+               <tbody id="UserList">
+                    @foreach (ClaimsBasedIdentity.Data.POCO.ApplicationUser u in Model.Entities)
+                    {
+                         <tr id="@u.Id">
+                              <td>@u.UserName</td>
+                              <td>@u.Email</td>
+                              <td>@u.PhoneNumber</td>
+                              <td class="action"><a href="/Account/UserDetails/@u.Id" data-toggle="tooltip" title="Details"><i class="fa fa-file-text-o" aria-hidden="true"></i></a></td>
+                              <td class="action"><a href="/Account/EditUser/@u.Id" data-toggle="tooltip" title="Edit"><i class="fa fa-edit" aria-hidden="true"></i></a></td>
+                              <td class="action"><a href="/Account/Delete/@u.Id" data-toggle="tooltip" title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></a></td>
+                         </tr>
+                    }
+                    @if (Model.Entities.Count == 0)
+                    {
+                         <tr id="noRecordsFound"><td class="lead text-left text-danger" colspan="4">No Records Found!</td></tr>
+                    }
+               </tbody>
+          </table>
+     </div>
+</div>
+
+<div class="row">
+     <div class="col-md-12">
+          <br />
+     </div>
+</div>
+<script id="userListHGrid" type="text/x-handlebars-template">
+     {{#UserList}}
+     <tr id="{{id}}" class="contextMenu-target">
+          <td>{{name}}</td>
+          <td class="action"><a href="/Account/{{id}}" data-toggle="tooltip" title="Details"><i class="fa fa-file-text-o" aria-hidden="true"></i></a></td>
+          <td class="action"><a href="/Account/Edit/{{id}}" data-toggle="tooltip" title="Edit"><i class="fa fa-edit" aria-hidden="true"></i></a></td>
+          <td class="action"><a href="/Account/Delete/{{id}}" data-toggle="tooltip" title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></a></td>
+     </tr>
+     {{/UserList}}
+</script>
+@section scripts {
+     <script type="text/javascript" src="~/lib/moment/moment.js"></script>
+     <script type="text/javascript" src="~/lib/handlebars/handlebars.js"></script>
+     <script type="text/javascript" src="~/js/ajaxcommon.js"></script>
+     <script type="text/javascript" src="~/js/jscommon.js"></script>
+     <script type="text/javascript" src="~/lib/turbotables.js"></script>
+     <script type="text/javascript" src="~/js/handlebarscommon.js"></script>
+     <script type="text/javascript" src="~/js/useraccount.js"></script>
+}
+

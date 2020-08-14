@@ -38,7 +38,10 @@ namespace ClaimsBasedIdentity.Web.UI
             services.Configure<AppSettingsConfiguration>(Configuration);
 
             // Initiliaze Data Repository
+            services.AddHttpContextAccessor();                                      // Needed by IsAuthorized Custom Authorization Policy
             services.AddSingleton<IDBConnection, DBConnection>();
+            services.AddSingleton<IAuthorizationHandler, IsAuthorizedHandler>();
+            services.AddSingleton<IAuthorizationHandler, IsAdultHandler>();
 
             // Use Cookie Scheme for Authentication/Authorization
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -57,11 +60,14 @@ namespace ClaimsBasedIdentity.Web.UI
                     .RequireAuthenticatedUser()
                     .Build();
                 config.DefaultPolicy = defaultAuthorizationPolicy;
-                config.AddPolicy("ITDepartment", policy =>
+                config.AddPolicy("IsAuthorized", policy =>                          // Customer policy
+                    policy.Requirements.Add(new IsAuthorizedRequirement())
+                );
+                config.AddPolicy("ITDepartment", policy =>                          // Simple claims policy
                     policy.RequireClaim("Department", new string[] { "IT" })
                 );
-                config.AddPolicy("IsAuthorized", policy =>
-                    policy.Requirements.Add(new IsAuthorizedRequirement(21))
+                config.AddPolicy("IsAdult", policy =>                          // Customer policy
+                    policy.Requirements.Add(new IsAdultRequirement(21))
                 );
             });
 
