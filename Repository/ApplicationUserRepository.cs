@@ -51,9 +51,19 @@ namespace ClaimsBasedIdentity.Data.Repository
             return base.FindByPK(pk);
         }
 
+        public ApplicationUser FindByPKView(IPrimaryKey pk)
+        {
+            ApplicationUserClaimRepository userClaimRepo = new ApplicationUserClaimRepository(Settings, logger, Connection);
+
+            ApplicationUser user = base.FindByPK(pk);
+            user.Claims = userClaimRepo.FindAll().Where(uc => uc.UserId == user.Id).ToList();
+
+            return user;
+        }
+
         public int Update(ApplicationUser entity)
         {
-            throw new NotImplementedException();
+            return base.Update(entity, entity.PK);
         }
     }
 }

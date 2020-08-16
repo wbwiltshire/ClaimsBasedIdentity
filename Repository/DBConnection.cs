@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.POCO;
+using Newtonsoft.Json;
 
 namespace ClaimsBasedIdentity.Data.Repository
 {
@@ -60,7 +61,7 @@ namespace ClaimsBasedIdentity.Data.Repository
         }
 
         public object Add<TEntity>(TEntity entity, PrimaryKey key)
-		{
+        {
             int newId = -1;
 
             ApplicationUser user = null;
@@ -76,9 +77,10 @@ namespace ClaimsBasedIdentity.Data.Repository
                 user = entity as ApplicationUser;
                 key.Key = newId;
                 user.PK = key;
+                user.ModifiedDt = DateTime.Now; user.CreateDt = DateTime.Now;
                 users.Add(user);
             } else if (typeof(TEntity) == typeof(ApplicationUserClaim))
-			{
+            {
                 if (userClaims == null)
                     newId = 1;
                 else
@@ -91,11 +93,41 @@ namespace ClaimsBasedIdentity.Data.Repository
             }
 
             return newId;
-		}
+        }
+
+        public int Update<TEntity>(TEntity entity, PrimaryKey key)
+        {
+            int rows = 0;
+            ApplicationUser user = null;
+            //ApplicationUserClaim userClaim = null;
+
+            if (typeof(TEntity) == typeof(ApplicationUser))
+            {
+                user = users.FirstOrDefault(u => (int)u.PK.Key == (int)key.Key);
+
+                //user = DeepCopy<ApplicationUser>(entity as ApplicationUser);
+                user.PK = key;
+                user.UserName = (entity as ApplicationUser).UserName;
+                user.NormalizedUserName = (entity as ApplicationUser).UserName.ToUpper();
+                user.Email = (entity as ApplicationUser).Email;
+                user.NormalizedEmail = (entity as ApplicationUser).Email.ToUpper();
+                user.EmailConfirmed = (entity as ApplicationUser).EmailConfirmed;
+                user.PhoneNumber = (entity as ApplicationUser).PhoneNumber;
+                user.PhoneNumberConfirmed = (entity as ApplicationUser).PhoneNumberConfirmed;
+                user.PasswordHash = (entity as ApplicationUser).PasswordHash;
+                user.TwoFactorEnabled = (entity as ApplicationUser).TwoFactorEnabled;
+                user.Department = (entity as ApplicationUser).Department;
+                user.DOB = (entity as ApplicationUser).DOB;
+                user.Active = true; user.ModifiedDt = DateTime.Now; user.CreateDt = (entity as ApplicationUser).CreateDt;
+                rows++;
+            }
+
+            return rows;
+        }
 
         public void Load()
         {
-            // Users
+            // Admin User
             users = new List<ApplicationUser>();
             users.Add(new ApplicationUser()
             {
@@ -113,8 +145,8 @@ namespace ClaimsBasedIdentity.Data.Repository
                 DOB = new DateTime(1900, 1, 1),
                 Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
             });
-
-            // User Claims
+            
+            #region User Claims
             userClaims = new List<ApplicationUserClaim>();
             userClaims.Add(new ApplicationUserClaim()
             {
@@ -155,9 +187,10 @@ namespace ClaimsBasedIdentity.Data.Repository
                 ClaimIssuer = "Local Authority",
                 Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
             });
+            #endregion
 
-            // Controller Security
-            controllerSecurity = new List<ApplicationControllerSecurity>();
+			#region Controller Security
+			controllerSecurity = new List<ApplicationControllerSecurity>();
             controllerSecurity.Add(new ApplicationControllerSecurity()
             {
                 PK = new PrimaryKey() { Key = 1, IsIdentity = true },
@@ -216,6 +249,31 @@ namespace ClaimsBasedIdentity.Data.Repository
                 ModifiedDt = DateTime.Now,
                 CreateDt = DateTime.Now
             });
+            controllerSecurity.Add(new ApplicationControllerSecurity()
+            {
+                PK = new PrimaryKey() { Key = 7, IsIdentity = true },
+                RoleName = "Administrator",
+                ControllerName = "Account",
+                ActionName = "EditUser",
+                Active = true,
+                ModifiedDt = DateTime.Now,
+                CreateDt = DateTime.Now
+            });
+            #endregion
+
+            //Roles
+            ApplicationRole.Initialize();
         }
+
+        // Helper methods
+        private TEntity DeepCopy<TEntity>(TEntity source)
+        {
+
+            var DeserializeSettings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };
+
+            return JsonConvert.DeserializeObject<TEntity>(JsonConvert.SerializeObject(source), DeserializeSettings);
+
+        }
+
     }
 }

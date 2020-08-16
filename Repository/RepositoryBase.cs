@@ -131,7 +131,29 @@ namespace ClaimsBasedIdentity.Data.Repository
 
             return result;
         }
-		#endregion
+        #endregion
 
-	}
+        #region Update
+        protected int Update(TEntity entity, PrimaryKey pk)
+        {
+            int rows = 0;
+
+            try
+            {
+                if (!dbc.IsOpen)
+                    dbc.Open();
+
+                    rows = dbc.Update<TEntity>(entity, pk);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            logger.LogInformation($"Update complete for {typeof(TEntity)} entity.");
+
+            return rows;
+        }
+        #endregion
+    }
 }

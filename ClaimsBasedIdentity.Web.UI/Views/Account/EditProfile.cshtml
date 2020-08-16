@@ -1,0 +1,22 @@
+﻿@model ClaimsBasedIdentity.Web.UI.Models.ApplicationUserViewModel
+@{
+    ViewData["AdminView"] = false;
+    ViewData["Title"] = "Edit Profile";
+}
+<div class="row">
+     <div class="col-md-12">
+          <h4>@ViewData["Title"]</h4>
+     </div>
+</div>
+<div class="row">
+     <div class="col-md-12">
+          <partial name="_PartialUserUpdateForm" view-data="ViewData" />
+     </div>
+</div>
+@section scripts {
+     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gijgo/1.9.13/combined/js/gijgo.min.js" crossorigin="anonymous"></script>
+     <script type="text/javascript" src="~/lib/moment/moment.js"></script>
+     <script type="text/javascript" src="~/js/ajaxcommon.js"></script>
+     <script type="text/javascript" src="~/js/jscommon.js"></script>
+     <script type="text/javascript" src="~/js/editprofile.js"></script>
+}

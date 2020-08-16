@@ -51,6 +51,6 @@ namespace ClaimsBasedIdentity.Data.POCO
 
 		//Relation properties
 		public ICollection<ApplicationUserClaim> Claims { get; set; }
-		public string RoleTags { get; set; }
+		public string RoleBadges { get; set; }
 	}
 }

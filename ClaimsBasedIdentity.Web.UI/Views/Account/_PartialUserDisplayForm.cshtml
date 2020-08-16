@@ -54,11 +54,11 @@
 		<div>
 			<label class="col-md-3 text-right">Roles:</label>
 			<div id="tags" class="col-md-9">
-				@foreach (Claim c in Context.User.Claims)
+				@foreach (ApplicationUserClaim uc in Model.Claims)
 				{
-					if (c.Type == ClaimTypes.Role)
+					if (uc.ClaimType == ClaimTypes.Role)
 					{
-						<h4><label class="text-normal"><span class="badge badge-pill badge-success">@c.Value</span></label></h4>
+						<h4><label class="text-normal"><span class="badge badge-pill badge-success">@uc.ClaimValue</span></label></h4>
 					}
 				}
 			</div>

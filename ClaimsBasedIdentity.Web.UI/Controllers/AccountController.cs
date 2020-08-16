@@ -74,7 +74,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
 
-				user = userRepo.FindByPK(new PrimaryKey() { Key = id, IsIdentity = true });
+				user = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
 				//user.Roles = new List<ApplicationRole>();
 				//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
 				//	user.Roles.Add(ur.ApplicationRole);
@@ -104,7 +104,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					userRepo = new ApplicationUserRepository(settings, logger, dbc);
 					//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
 
-					user = userRepo.FindByPK(new PrimaryKey() { Key = id, IsIdentity = true });
+					user = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
 					//user.Roles = new List<ApplicationRole>();
 					//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
 					//	user.Roles.Add(ur.ApplicationRole);
@@ -117,6 +117,146 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			return View("UserDetails", user);
 		}
 		#endregion
+
+		#region /Account/EditProfile
+		//GET: /Account/EditProfile/{id}
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/EditProfile/{id:int}")]
+		public IActionResult EditProfile(int id)
+		{
+			ApplicationUserRepository userRepo;
+			ApplicationUserViewModel view = new ApplicationUserViewModel() { User = null, Roles = null };
+
+			try
+			{
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				//view.Roles = ApplicationRole.Roles;
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+			return View("EditProfile", view);
+		}
+
+		// POST: /Account/EditProfile
+		[HttpPost]
+		[Authorize]
+		[Route("/[controller]/EditProfile/{id:int}")]
+		[ValidateAntiForgeryToken]
+		public ActionResult EditProfile(ApplicationUserViewModel view)
+		{
+			ApplicationUserRepository userRepo;
+			ApplicationUserClaimRepository userClaimRepo;
+
+			try
+			{
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+				if (ModelState.IsValid)
+				{
+					//TODO: Update the Roles, DOB, and Department changes
+					userRepo.Update(view.User);
+
+					return RedirectToAction("LoginSuccess", "Home");
+				}
+				else
+				{
+					userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+					userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+					view.User = userRepo.FindByPKView(new PrimaryKey() { Key = view.User.Id, IsIdentity = true });
+					//view.Roles = ApplicationRole.Roles;
+
+					return View("EditProfile", view);
+				}
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+		}
+		#endregion
+
+
+		#region /Account/EditUser
+		//GET: /Account/EditUser/{id}
+		[HttpGet]
+		[Authorize(Policy="IsAuthorized")]
+		[Route("/[controller]/EditUser/{id:int}")]
+		public IActionResult EditUser(int id)
+		{
+			ApplicationUserRepository userRepo;
+			ApplicationUserViewModel view = new ApplicationUserViewModel() { User = null, Roles = null };
+
+			try
+			{
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				view.Roles = ApplicationRole.Roles;
+
+				// Update the RoleBadges
+				foreach (ApplicationUserClaim uc in view.User.Claims.Where(uc => uc.UserId == view.User.Id))
+					view.User.RoleBadges += String.Format("{0}-{1}|", uc.Id, uc.ClaimType);
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+			return View("EditUser", view);
+		}
+
+		// POST: /Account/EditUser
+		[HttpPost]
+		[Authorize(Policy="IsAuthorized")]
+		[Route("/[controller]/EditUser/{id:int}")]
+		[ValidateAntiForgeryToken]
+		public ActionResult EditUser(ApplicationUserViewModel view)
+		{
+			ApplicationUserRepository userRepo;
+			ApplicationUserClaimRepository userClaimRepo;
+
+			try
+			{
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+				if (ModelState.IsValid)
+				{
+					//TODO: Update the Roles, DOB, and Department changes
+					userRepo.Update(view.User);
+
+					return RedirectToAction("Index", "Account");
+				}
+				else
+				{
+					userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+					userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+					view.User = userRepo.FindByPKView(new PrimaryKey() { Key = view.User.Id, IsIdentity = true });
+					view.Roles = ApplicationRole.Roles;
+
+					// Update the RoleBadges
+					foreach (ApplicationUserClaim uc in view.User.Claims.Where(uc => uc.UserId == view.User.Id))
+						view.User.RoleBadges += String.Format("{0}-{1}|", uc.Id, uc.ClaimType);
+
+					return View("EditUser", view);
+				}
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+		}
+		#endregion
+
 
 		#region Login and Register
 		[HttpGet]

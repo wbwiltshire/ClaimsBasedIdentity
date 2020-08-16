@@ -41,4 +41,10 @@ namespace ClaimsBasedIdentity.Web.UI.Models
 
     }
 
+
+    public class ApplicationUserViewModel
+    {
+        public ApplicationUser User { get; set; }
+        public ICollection<ApplicationRole> Roles { get; set; }
+    }
 }
