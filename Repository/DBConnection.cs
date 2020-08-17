@@ -138,6 +138,28 @@ namespace ClaimsBasedIdentity.Data.Repository
             return rows;
         }
 
+        public int Delete<TEntity>(IPrimaryKey key)
+        {
+            int rows = 0;
+            ApplicationUser user = null;
+            ApplicationUserClaim userClaim = null;
+
+            if (typeof(TEntity) == typeof(ApplicationUser))
+            {
+                user = users.FirstOrDefault(u => u.Id == (int)key.Key);
+                users.Remove(user);
+                rows = 1;
+            }
+            else if (typeof(TEntity) == typeof(ApplicationUserClaim))
+			{
+                userClaim = userClaims.FirstOrDefault(u => u.Id == (int)key.Key);
+                userClaims.Remove(userClaim);
+                rows = 1;
+            }
+
+            return rows;
+        }
+
         public void Load()
         {
             // Admin User
@@ -166,7 +188,7 @@ namespace ClaimsBasedIdentity.Data.Repository
                 PK = new PrimaryKey() { Key = 1, IsIdentity = true },
                 UserId = 1,
                 ClaimType = ClaimTypes.Name,
-                ClaimValue = "Administrator",
+                ClaimValue = "Admin",
                 ClaimIssuer = "Local Authority",
                 Active = true,
                 ModifiedDt = DateTime.Now,
@@ -273,6 +295,17 @@ namespace ClaimsBasedIdentity.Data.Repository
                 CreateDt = DateTime.Now
             });
             #endregion
+
+            controllerSecurity.Add(new ApplicationControllerSecurity()
+            {
+                PK = new PrimaryKey() { Key = 8, IsIdentity = true },
+                RoleName = "Manager",
+                ControllerName = "Secret",
+                ActionName = "ManagerSecret",
+                Active = true,
+                ModifiedDt = DateTime.Now,
+                CreateDt = DateTime.Now
+            });
 
             //Roles
             ApplicationRole.Initialize();

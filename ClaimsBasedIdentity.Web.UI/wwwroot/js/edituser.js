@@ -74,7 +74,7 @@
                roleList.appendChild(newRole);
 
                //update the RoleText
-               var searchRoles = document.getElementsByName('User.RoleTags')[0];
+               var searchRoles = document.getElementsByName('User.RoleBadges')[0];
                searchRoles.value += newRoleId + '|';
           }
           // else this user already has the role
@@ -92,7 +92,7 @@
      function DeleteRole(id) {
           // update the RoleText
           var roleTextString = id + '|';
-          var roleText = document.getElementsByName('User.RoleTags')[0];
+          var roleText = document.getElementsByName('User.RoleBadges')[0];
           roleText.value = roleText.value.replace(roleTextString, '');
 
           // delete the role

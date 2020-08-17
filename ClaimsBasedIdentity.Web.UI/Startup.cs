@@ -51,8 +51,9 @@ namespace ClaimsBasedIdentity.Web.UI
                     options =>
                     {
                         options.Cookie.Name = "Identity.Cookie";
-                        options.LoginPath = new PathString("/Account/Login/");
+                        options.LoginPath = new PathString("/Account/LoginRegister");
                         options.AccessDeniedPath = new PathString("/Account/Forbidden/");
+                        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                     }
                 );
 

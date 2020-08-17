@@ -155,5 +155,27 @@ namespace ClaimsBasedIdentity.Data.Repository
             return rows;
         }
         #endregion
+
+        #region Delete
+        public int Delete(IPrimaryKey pk)
+        {
+            int rows = 0;
+
+            try
+            {
+                if (!dbc.IsOpen)
+                    dbc.Open();
+
+                rows = dbc.Delete<TEntity>(pk);
+                logger.LogInformation($"Delete complete for {typeof(TEntity)} entity.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return rows;
+        }
+        #endregion
     }
 }

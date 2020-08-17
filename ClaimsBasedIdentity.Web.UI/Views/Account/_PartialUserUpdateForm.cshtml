@@ -31,7 +31,7 @@
           <input type="hidden" name="User.PasswordHash" value="@Model.User.PasswordHash" />
           <input type="hidden" name="User.Active" value="@Model.User.Active.ToString()" />
           <input type="hidden" name="User.ModifiedDt" value="@Model.User.ModifiedDt" />
-          <input type="hidden" id="rolebadges" name="User.RoleTags" value="@Model.User.RoleBadges" />
+          <input type="hidden" id="rolebadges" name="User.RoleBadges" value="@Model.User.RoleBadges" />
           <div asp-validation-summary="ModelOnly" class="text-danger"></div>
           <div class="form-group row">
                <label asp-for="User.Id" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Id):</label>

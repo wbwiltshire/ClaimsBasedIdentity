@@ -35,7 +35,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 
         public int Delete(PrimaryKey pk)
         {
-            throw new NotImplementedException();
+            return base.Delete(pk);
         }
 
         public IPager<ApplicationUserClaim> FindAll(IPager<ApplicationUserClaim> pager)
