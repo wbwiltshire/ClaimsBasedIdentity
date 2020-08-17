@@ -50,7 +50,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 
         public int Update(ApplicationUserClaim entity)
         {
-            throw new NotImplementedException();
+            return base.Update(entity, entity.PK);
         }
     }
 }

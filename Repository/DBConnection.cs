@@ -89,6 +89,7 @@ namespace ClaimsBasedIdentity.Data.Repository
                 userClaim = entity as ApplicationUserClaim;
                 key.Key = newId;
                 userClaim.PK = key;
+                userClaim.ModifiedDt = DateTime.Now; userClaim.CreateDt = DateTime.Now;
                 userClaims.Add(userClaim);
             }
 
@@ -99,7 +100,7 @@ namespace ClaimsBasedIdentity.Data.Repository
         {
             int rows = 0;
             ApplicationUser user = null;
-            //ApplicationUserClaim userClaim = null;
+            ApplicationUserClaim userClaim = null;
 
             if (typeof(TEntity) == typeof(ApplicationUser))
             {
@@ -119,6 +120,18 @@ namespace ClaimsBasedIdentity.Data.Repository
                 user.Department = (entity as ApplicationUser).Department;
                 user.DOB = (entity as ApplicationUser).DOB;
                 user.Active = true; user.ModifiedDt = DateTime.Now; user.CreateDt = (entity as ApplicationUser).CreateDt;
+                rows++;
+            }
+            else if (typeof(TEntity) == typeof(ApplicationUserClaim))
+            {
+                userClaim = userClaims.FirstOrDefault(u => (int)u.PK.Key == (int)key.Key);
+
+                //user = DeepCopy<ApplicationUser>(entity as ApplicationUser);
+                userClaim.PK = key;
+                userClaim.ClaimType = (entity as ApplicationUserClaim).ClaimType;
+                userClaim.ClaimValue = (entity as ApplicationUserClaim).ClaimValue;
+                userClaim.ClaimIssuer = (entity as ApplicationUserClaim).ClaimIssuer;
+                userClaim.Active = true; userClaim.ModifiedDt = DateTime.Now; userClaim.CreateDt = (entity as ApplicationUserClaim).CreateDt;
                 rows++;
             }
 

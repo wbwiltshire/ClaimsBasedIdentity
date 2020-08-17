@@ -97,7 +97,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
         }
 
         [HttpGet]
-        [Authorize(Policy = "IsAuthorized")]
+        [Authorize(Policy = "ITDepartment")]
         [Route("/[controller]/ClaimsSecret")]
         public IActionResult ClaimsSecret()
         {

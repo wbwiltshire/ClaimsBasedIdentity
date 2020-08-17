@@ -148,19 +148,85 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[Authorize]
 		[Route("/[controller]/EditProfile/{id:int}")]
 		[ValidateAntiForgeryToken]
-		public ActionResult EditProfile(ApplicationUserViewModel view)
+		public async Task<ActionResult> EditProfile(ApplicationUserViewModel view)
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
+			ApplicationUserClaim userClaim = null;
+			ClaimsPrincipal userPrincipal = null;
+			Claim dobClaim = null; Claim deptClaim = null;
+			const string issuer = "Local Authority";
+			const string claimTypesDepartment = "Department";
 
 			try
 			{
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+				userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
 
 				if (ModelState.IsValid)
 				{
-					//TODO: Update the Roles, DOB, and Department changes
 					userRepo.Update(view.User);
+					//TODO: Update the Roles, DOB, and Department changes
+					dobClaim = HttpContext.User.FindFirst(ClaimTypes.DateOfBirth);
+					if (dobClaim != null)
+					{
+						((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(dobClaim);
+						userClaim = (userClaimRepo.FindAll()).FirstOrDefault(uc => uc.UserId == view.User.Id && uc.ClaimType == ClaimTypes.DateOfBirth);
+						userClaim.ModifiedDt = DateTime.Now;
+						userClaim.ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss");
+						userClaimRepo.Update(userClaim);
+					}
+					else
+						userClaimRepo.Add(new ApplicationUserClaim()
+						{
+							UserId = view.User.Id,
+							ClaimType = ClaimTypes.DateOfBirth,
+							ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"),
+							ClaimIssuer = issuer,
+							Active = true,
+							ModifiedDt = DateTime.Now,
+							CreateDt = DateTime.Now
+						});
+
+					((ClaimsIdentity)HttpContext.User.Identity)
+						.AddClaim(new Claim(ClaimTypes.DateOfBirth, view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimValueTypes.String, issuer));
+
+					deptClaim = HttpContext.User.FindFirst(claimTypesDepartment);
+					if (deptClaim != null)
+					{
+						((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(deptClaim);
+						userClaim = (userClaimRepo.FindAll()).FirstOrDefault(uc => uc.UserId == view.User.Id && uc.ClaimType == claimTypesDepartment);
+						userClaim.ModifiedDt = DateTime.Now;
+						userClaim.ClaimValue = view.User.Department;
+						userClaimRepo.Update(userClaim);
+					}
+					else
+						userClaimRepo.Add(new ApplicationUserClaim()
+						{
+							UserId = view.User.Id,
+							ClaimType = claimTypesDepartment,
+							ClaimValue = view.User.Department,
+							ClaimIssuer = issuer,
+							Active = true,
+							ModifiedDt = DateTime.Now,
+							CreateDt = DateTime.Now
+						});
+					((ClaimsIdentity)HttpContext.User.Identity)
+						.AddClaim(new Claim(claimTypesDepartment, view.User.Department, ClaimValueTypes.String, issuer));
+
+					// Refresh Cookie by recreating the User Security Principal from the current Identity Principal
+					userPrincipal = new ClaimsPrincipal(HttpContext.User.Identity);
+
+					// Sign In User
+					await HttpContext.SignInAsync(
+						CookieAuthenticationDefaults.AuthenticationScheme,
+						userPrincipal,
+						new AuthenticationProperties()
+						{
+							IsPersistent = false
+						});
+
+					logger.LogInformation($"Refreshed cookie for user: {view.User.UserName}");
 
 					return RedirectToAction("LoginSuccess", "Home");
 				}
@@ -222,15 +288,63 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
+			ApplicationUserClaim userClaim = null;
+			Claim dobClaim = null; Claim deptClaim = null;
+			const string issuer = "Local Authority";
+			const string claimTypesDepartment = "Department";
 
 			try
 			{
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+				userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
 
 				if (ModelState.IsValid)
 				{
-					//TODO: Update the Roles, DOB, and Department changes
 					userRepo.Update(view.User);
+					//TODO: Update the Roles, DOB, and Department changes
+					dobClaim = HttpContext.User.FindFirst(ClaimTypes.DateOfBirth);
+					if (dobClaim != null) {
+						((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(dobClaim);
+						userClaim = (userClaimRepo.FindAll()).FirstOrDefault(uc => uc.UserId == view.User.Id && uc.ClaimType == ClaimTypes.DateOfBirth);
+						userClaim.ModifiedDt = DateTime.Now;
+						userClaim.ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss");
+						userClaimRepo.Update(userClaim);
+					}
+					else
+						userClaimRepo.Add(new ApplicationUserClaim() { 
+							UserId = view.User.Id, 
+							ClaimType = ClaimTypes.DateOfBirth, 
+							ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"),
+							ClaimIssuer = issuer,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						});
+
+					((ClaimsIdentity)HttpContext.User.Identity)
+						.AddClaim(new Claim(ClaimTypes.DateOfBirth, view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimValueTypes.String, issuer));
+
+					deptClaim = HttpContext.User.FindFirst(claimTypesDepartment);
+					if (deptClaim != null)
+					{
+						((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(deptClaim);
+						userClaim = (userClaimRepo.FindAll()).FirstOrDefault(uc => uc.UserId == view.User.Id && uc.ClaimType == claimTypesDepartment);
+						userClaim.ModifiedDt = DateTime.Now;
+						userClaim.ClaimValue = view.User.Department;
+						userClaimRepo.Update(userClaim);
+					}
+					else
+						userClaimRepo.Add(new ApplicationUserClaim()
+						{
+							UserId = view.User.Id,
+							ClaimType = claimTypesDepartment,
+							ClaimValue = view.User.Department,
+							ClaimIssuer = issuer,
+							Active = true,
+							ModifiedDt = DateTime.Now,
+							CreateDt = DateTime.Now
+						});
+					((ClaimsIdentity)HttpContext.User.Identity)
+						.AddClaim(new Claim(claimTypesDepartment, view.User.Department, ClaimValueTypes.String, issuer));
+
 
 					return RedirectToAction("Index", "Account");
 				}
