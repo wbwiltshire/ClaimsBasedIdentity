@@ -8,6 +8,12 @@ namespace ClaimsBasedIdentity.Data.Interfaces
         bool IsOpen { get; set; }
         bool Open();
         void Close();
+        void Load();
+        object Select<TEntity>(IPrimaryKey key);
+        ICollection<TEntity> Select<TEntity>();
+        object Add<TEntity>(TEntity entity, PrimaryKey key);
+        int Update<TEntity>(TEntity entity, PrimaryKey ke);
+        int Delete<TEntity>(IPrimaryKey key);
     }
 
     public interface IPrimaryKey

@@ -12,6 +12,7 @@
 			</div>
 			<div class="modal-body">
 				<form action="/account/login" method="post">
+					@Html.AntiForgeryToken()
 					<div class="form-group">
 						<i class="fa fa-user"></i>
 						<input id="LoginUserName" name="UserName" class="form-control" type="text" placeholder="Username" required="required">
@@ -46,6 +47,7 @@
 			</div>
 			<div class="modal-body">
 				<form action="/account/register" method="post">
+					@Html.AntiForgeryToken()
 					<div class="form-group">
 						<i class="fa fa-user"></i>
 						<input id="RegisterUserName" name="UserName" class="form-control" type="text" placeholder="Username" required="required">

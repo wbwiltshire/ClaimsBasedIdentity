@@ -44,6 +44,7 @@ namespace ClaimsBasedIdentity.Web.UI
             // Custom Authorization Policy Handlers
             services.AddSingleton<IAuthorizationHandler, IsAuthorizedHandler>();
             services.AddSingleton<IAuthorizationHandler, IsAdultHandler>();
+            services.AddSingleton<IIdentityManager, IdentityManager>();
 
             // Use Cookie Scheme for Authentication/Authorization
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

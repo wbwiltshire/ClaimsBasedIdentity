@@ -17,6 +17,7 @@ using ClaimsBasedIdentity.Data.POCO;
 using ClaimsBasedIdentity.Data.Repository;
 using ClaimsBasedIdentity.Web.UI.Identity;
 using System.Runtime.CompilerServices;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ClaimsBasedIdentity.Web.UI.Controllers
 {
@@ -25,13 +26,15 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 	{
 		private readonly ILogger<AccountController> logger;
 		private readonly AppSettingsConfiguration settings;
-		private readonly DBConnection dbc;
+		private readonly IDBConnection dbc;
+		private readonly IIdentityManager identityManager;
 
-		public AccountController(ILogger<AccountController> l, IOptions<AppSettingsConfiguration> s, IDBConnection d)
+		public AccountController(ILogger<AccountController> l, IOptions<AppSettingsConfiguration> s, IIdentityManager m, IDBConnection d)
 		{
 			logger = l;
 			settings = s.Value;
-			dbc = (DBConnection)d;
+			identityManager = m;
+			dbc = d;
 		}
 
 		#region /Account/Index
@@ -255,7 +258,6 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		}
 		#endregion
 
-
 		#region /Account/EditUser
 		//GET: /Account/EditUser/{id}
 		[HttpGet]
@@ -351,6 +353,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							.AddClaim(new Claim(ClaimTypes.DateOfBirth, view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimValueTypes.String, issuer));
 					}
 
+					//TODO: Department still has issues when transitioning from null to not null
 					//Add Department claim to database and to claims list of the user
 					userClaim = (userClaimRepo.FindAll()).FirstOrDefault(uc => uc.UserId == view.User.Id && uc.ClaimType == claimTypesDepartment);
 					if (userClaim != null) {
@@ -483,7 +486,6 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		}
 		#endregion
 
-
 		#region Login and Register
 		[HttpGet]
 		[AllowAnonymous]
@@ -496,50 +498,37 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[HttpPost]
 		[AllowAnonymous]
 		[Route("/[controller]/Login")]
+		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginViewModel login)
 		{
-			//ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUserRepository userRepo = null;
-			ApplicationUserClaimRepository userClaimsRepo = null;
+			ApplicationUserClaimRepository userClaimRepo = null;
 			ApplicationUser user = null;
-			ClaimsIdentity userIdentity = null;
-			ClaimsPrincipal userPrincipal = null;
 			bool valid = false;
-			//const string issuer = "Local Authority";
 
 			try
 			{
 				if (ModelState.IsValid)
 				{
 					userRepo = new ApplicationUserRepository(settings, logger, dbc);
-					userClaimsRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+					userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
 
 					// Find user in database and validate there password				
 					user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == login.UserName.ToUpper());
 					if (user != null)
 					{
 						valid = PasswordHash.ValidateHashedPassword(user.PasswordHash, login.Password);
+
 						// Build the user Identity context, if they are validated
 						if (valid)
 						{
-							// Build User Identity
-							userIdentity = new ClaimsIdentity("LocalIdentity");
+							// Add user claims from the database
+							user.Claims = new List<ApplicationUserClaim>();
+							foreach (ApplicationUserClaim c in userClaimRepo.FindAll().Where(c => c.UserId == user.Id))
+								user.Claims.Add(c);
 
-							// Add claims from the database
-							foreach (ApplicationUserClaim c in userClaimsRepo.FindAll().Where(c => c.UserId == user.Id))
-								userIdentity.AddClaim(new Claim(c.ClaimType, c.ClaimValue, ClaimValueTypes.String, c.ClaimIssuer));
-							
-							// Build User Security Principal from the Identity Principal
-							userPrincipal = new ClaimsPrincipal(userIdentity);
-
-							// Sign In User
-							await HttpContext.SignInAsync(
-								CookieAuthenticationDefaults.AuthenticationScheme,
-								userPrincipal,
-								new AuthenticationProperties()
-								{
-									IsPersistent = false
-								});
+							// Sign in the user
+							await identityManager.SignInAsync(user);
 
 							logger.LogInformation($"Logged in user: {login.UserName}");
 							return LocalRedirect("/Home/LoginSuccess");
@@ -571,14 +560,14 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[AllowAnonymous]
 		[Route("/[controller]/Register")]
 		//[ValidateAntiForgeryToken]
+		[ValidateAntiForgeryToken]
 		public async Task<ActionResult> Register(RegisterViewModel register)
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUser user;
-			AuthenticationProperties props = null;
-			ClaimsIdentity userIdentity = null;
-			ClaimsPrincipal userPrincipal = null;
+			ApplicationUserClaim userClaim;
+			//AuthenticationProperties props = null;
 			const string issuer = "Local Authority";
 			int id = 0;
 
@@ -604,44 +593,50 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							TwoFactorEnabled = false,
 							DOB = DateTime.Now,
 							Department = String.Empty,
-							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now,
+							Claims = new List<ApplicationUserClaim>()
 						};
 
-						// Add user to the database
+						// NOTE: This shoudl be wrapped in a Unit of Work
+						// Add User to the database
 						user.PasswordHash = PasswordHash.HashPassword(register.Password);
 						id = (int)userRepo.Add(user);
 						logger.LogInformation($"Created new user account: {register.UserName}");
 
-						// Build User Identity
-						userIdentity = new ClaimsIdentity("LocalIdentity");
-						userIdentity.AddClaim(new Claim(ClaimTypes.Name, user.UserName, ClaimValueTypes.String, issuer));
-						userIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, id.ToString(), ClaimValueTypes.Integer32, issuer));
-						userIdentity.AddClaim(new Claim(ClaimTypes.Role, "Basic", ClaimValueTypes.String, issuer));
-						userIdentity.AddClaim(new Claim(ClaimTypes.DateOfBirth, user.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimValueTypes.String, issuer));
+						// Add default User Claims
+						user.Claims.Add(new ApplicationUserClaim()
+						{
+							UserId = id,
+							ClaimType = ClaimTypes.Name, ClaimValue = user.UserName, ClaimIssuer = issuer,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						});
+						user.Claims.Add(new ApplicationUserClaim()
+						{
+							UserId = id, 
+							ClaimType = ClaimTypes.NameIdentifier, ClaimValue = id.ToString(), ClaimIssuer = issuer,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						});
+						user.Claims.Add(new ApplicationUserClaim()
+						{
+							UserId = id,
+							ClaimType = ClaimTypes.Role, ClaimValue = "Basic", ClaimIssuer = issuer,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						});
+						user.Claims.Add(new ApplicationUserClaim()
+						{
+							UserId = id,
+							ClaimType = ClaimTypes.DateOfBirth, ClaimValue = user.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimIssuer = issuer,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						});
 
 						// Add User Claims to the database
-						foreach (Claim c in userIdentity.Claims)
-							userClaimRepo.Add(new ApplicationUserClaim() {
-								UserId = id,
-								ClaimType = c.Type,
-								ClaimValue = c.Value,
-								ClaimIssuer = c.Issuer,
-								Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
-							});
+						foreach (ApplicationUserClaim c in user.Claims)
+							userClaimRepo.Add(c);
 
 						logger.LogInformation($"Assigned default claims to new user account: {register.UserName}");
 
-						// Build User Security Principal from the Identity Principal
-						userPrincipal = new ClaimsPrincipal(userIdentity);
-
-						// Sign In User
-						await HttpContext.SignInAsync(
-							CookieAuthenticationDefaults.AuthenticationScheme,
-							userPrincipal,
-							new AuthenticationProperties()
-							{
-								IsPersistent = false
-							});
+						// Sign in the user
+						await identityManager.SignInAsync(user);
 
 						return RedirectToAction("LoginSuccess", "Home");
 					}

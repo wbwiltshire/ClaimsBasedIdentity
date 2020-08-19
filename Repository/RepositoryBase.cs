@@ -13,9 +13,9 @@ namespace ClaimsBasedIdentity.Data.Repository
 		where TEntity : class
 	{
 		private readonly ILogger logger;
-		private DBConnection dbc;
+		private IDBConnection dbc;
 
-		protected RepositoryBase(AppSettingsConfiguration s, ILogger l, DBConnection d)
+		protected RepositoryBase(AppSettingsConfiguration s, ILogger l, IDBConnection d)
 		{
 			Settings = s;
 			logger = l;
@@ -26,7 +26,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 		protected string CMDText { get; set; }
 		protected AppSettingsConfiguration Settings { get; }
 
-		public DBConnection Connection { get { return dbc; } }
+		public IDBConnection Connection { get { return dbc; } }
 
         #region FindAllCount
         protected int FindAllCount()

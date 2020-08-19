@@ -34,22 +34,6 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 			return CreateHash(salt, subkey, iterCount, saltLength);
 		}
 
-		public static string CreateHash(byte[] s, byte[] sk, int ic, int sl)
-		{
-			byte formatMarker = 0x01;
-			KeyDerivationPrf prf = KeyDerivationPrf.HMACSHA256;
-			byte[] hashBytes = new byte[13 + s.Length + sk.Length];
-
-			hashBytes[0] = (byte)formatMarker;
-			WriteNetworkByteOrder(hashBytes, 1, (uint)prf);
-			WriteNetworkByteOrder(hashBytes, 5, (uint)ic);
-			WriteNetworkByteOrder(hashBytes, 9, (uint)sl);
-			Buffer.BlockCopy(s, 0, hashBytes, 13, s.Length);
-			Buffer.BlockCopy(sk, 0, hashBytes, 13 + s.Length, sk.Length);
-
-			return Convert.ToBase64String(hashBytes);
-		}
-
 		public static bool ValidateHashedPassword(string hashedPassword, string providedPassword)
 		{
 			int iterCount = 0;
@@ -77,6 +61,22 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 			byte[] actualSubkey = KeyDerivation.Pbkdf2(providedPassword, salt, prf, iterCount, subkeyLength);
 
 			return CryptographicOperations.FixedTimeEquals(actualSubkey, expectedSubkey);
+		}
+
+		private static string CreateHash(byte[] s, byte[] sk, int ic, int sl)
+		{
+			byte formatMarker = 0x01;
+			KeyDerivationPrf prf = KeyDerivationPrf.HMACSHA256;
+			byte[] hashBytes = new byte[13 + s.Length + sk.Length];
+
+			hashBytes[0] = (byte)formatMarker;
+			WriteNetworkByteOrder(hashBytes, 1, (uint)prf);
+			WriteNetworkByteOrder(hashBytes, 5, (uint)ic);
+			WriteNetworkByteOrder(hashBytes, 9, (uint)sl);
+			Buffer.BlockCopy(s, 0, hashBytes, 13, s.Length);
+			Buffer.BlockCopy(sk, 0, hashBytes, 13 + s.Length, sk.Length);
+
+			return Convert.ToBase64String(hashBytes);
 		}
 
 		private static uint ReadNetworkByteOrder(byte[] buffer, int offset)

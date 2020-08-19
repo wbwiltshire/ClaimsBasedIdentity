@@ -10,7 +10,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 {
     public class ApplicationUserRepository : RepositoryBase<ApplicationUser>, IRepository<ApplicationUser>
     {
-        public ApplicationUserRepository(AppSettingsConfiguration s, ILogger l, DBConnection d) : 
+        public ApplicationUserRepository(AppSettingsConfiguration s, ILogger l, IDBConnection d) : 
             base(s, l, d)
         {
             Initialize(l);
