@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Text;
+using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using ClaimsBasedIdentity.Data;
 using ClaimsBasedIdentity.Data.Interfaces;
 using System.Globalization;
+
 
 namespace ClaimsBasedIdentity.Data.POCO
 {
@@ -35,6 +37,11 @@ namespace ClaimsBasedIdentity.Data.POCO
         {
             return $"{Id}|{UserId}|{ClaimType}|{ClaimValue}|{Active}|{ModifiedDt}|{CreateDt}|";
         }
+
+        public Claim ToClaim()
+		{
+            return new Claim(this.ClaimType, ClaimValue, ClaimValueTypes.String, ClaimIssuer); 
+		} 
 
         // Relationships
         public ApplicationUser ApplicationUser { get; set; }

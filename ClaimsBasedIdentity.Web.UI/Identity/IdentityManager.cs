@@ -17,10 +17,10 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 {
 	public interface IIdentityManager
 	{
-		Task<bool> RefreshClaimsAsync(ApplicationUser u);
+		Task<bool> RefreshClaimsAsync(ApplicationUser u, ICollection<ApplicationUserClaim> c);
 		Task<bool> SignInAsync(ApplicationUser u);
 		Task<bool> SignInWithPasswordAsync(ApplicationUser u, string pw);
-		Task<bool> SignOutAsync(ApplicationUser u);
+		Task<bool> SignOutAsync(string n);
 	}
 
 	public class IdentityManager : IIdentityManager
@@ -36,8 +36,48 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 			contextAccessor = hca;
 		}
 
-		public async Task<bool> RefreshClaimsAsync(ApplicationUser user) { return await Task.FromResult(true); }
+		#region RefreshClaimsAsync(ApplicationUser, ICollection<ApplicationUserClaim>)
+		public async Task<bool> RefreshClaimsAsync(ApplicationUser user, ICollection<ApplicationUserClaim> claims)
+		{
 
+			ClaimsPrincipal userPrincipal;
+			bool result = false;
+
+			try
+			{
+				// Remove all the old claims
+				foreach (Claim c in contextAccessor.HttpContext.User.Claims.ToList())
+					((ClaimsIdentity)contextAccessor.HttpContext.User.Identity).RemoveClaim(c);
+				// Add all the new claims
+				foreach (ApplicationUserClaim uc in claims)
+					((ClaimsIdentity)contextAccessor.HttpContext.User.Identity).AddClaim(uc.ToClaim());
+
+
+				// Build User Security Principal from the Identity Principal
+				userPrincipal = new ClaimsPrincipal(contextAccessor.HttpContext.User.Identity);
+
+				// Sign In User
+				await contextAccessor.HttpContext.SignInAsync(
+					CookieAuthenticationDefaults.AuthenticationScheme,
+					userPrincipal,
+					new AuthenticationProperties()
+					{
+						IsPersistent = false
+					});
+
+				logger.LogInformation($"Logged in user: {user.UserName}");
+				result = true;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError($"Exception: RefreshClaimsAsync - {ex.Message}");
+			}
+
+			return result;
+		}
+		#endregion
+
+		#region SignInAsync(ApplicationUser)
 		public async Task<bool> SignInAsync(ApplicationUser user)
 		{
 			ClaimsIdentity userIdentity;
@@ -49,7 +89,7 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 				// Build User Identity
 				userIdentity = new ClaimsIdentity("LocalIdentity");
 
-				// Add claims from the database
+				// Add claims from the User
 				foreach (ApplicationUserClaim c in user.Claims)
 					userIdentity.AddClaim(new Claim(c.ClaimType, c.ClaimValue, ClaimValueTypes.String, c.ClaimIssuer));
 
@@ -70,20 +110,41 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 			}
 			catch (Exception ex)
 			{
-				logger.LogInformation($"Logged in user: {ex.Message}");
+				logger.LogError($"Exception: SignInAsync - {ex.Message}");
 			}
 
 			return result;
 		}
+		#endregion
 
+		#region SignInWithPassword(ApplicationUser, string)
 		public async Task<bool> SignInWithPasswordAsync(ApplicationUser user, string loginPassword) {
 
 			if (PasswordHash.ValidateHashedPassword(user.PasswordHash, loginPassword))
 				return await SignInAsync(user);
 			else
 				return await Task.FromResult(false); }
-		
-		public async Task<bool> SignOutAsync(ApplicationUser user) { return await Task.FromResult(true); }
+
+		#endregion
+
+		#region SignOutAsync()
+		public async Task<bool> SignOutAsync(string name)
+		{
+			bool result = false;
+
+			try
+			{
+				await contextAccessor.HttpContext.SignOutAsync();
+				logger.LogInformation($"Logged out user: {name}");
+			}
+			catch (Exception ex)
+			{
+				logger.LogError($"Exception: SignOutAsync - {ex.Message}");
+			}
+
+			return result;
+		}
+		#endregion
 
 	}
 }

@@ -18,6 +18,7 @@ using ClaimsBasedIdentity.Data.Repository;
 using ClaimsBasedIdentity.Web.UI.Identity;
 using System.Runtime.CompilerServices;
 using System.Reflection.Metadata.Ecma335;
+using Microsoft.AspNetCore.Identity;
 
 namespace ClaimsBasedIdentity.Web.UI.Controllers
 {
@@ -297,8 +298,6 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUserClaim userClaim = null;
-			ClaimsPrincipal userPrincipal = null;
-			Claim dobClaim = null; Claim deptClaim = null; Claim roleClaim = null;
 			IList<string> currentRoles = null;
 			string role = String.Empty; 
 			int claimId = 0;
@@ -314,6 +313,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 				if (ModelState.IsValid)
 				{
+					// Update the user in the database
 					userRepo.Update(view.User);
 
 					//Add DOB claim to database and to claims list of the current user, if applicable
@@ -322,35 +322,27 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						if (userClaim.ClaimValue != view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss")) {
 							userClaim.ModifiedDt = DateTime.Now;
 							userClaim.ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss");
+							// Update the database
 							userClaimRepo.Update(userClaim);
-							logger.LogInformation($"Updated role({ClaimTypes.DateOfBirth}) for user account: {view.User.UserName}");
+							logger.LogInformation($"Updated claim({ClaimTypes.DateOfBirth}) for user account: {view.User.UserName}");
 						}
 						else
 						{
 							// Nothing changed, so no need to update the database
 						}
+
 					}
 					else
 					{
-						userClaimRepo.Add(new ApplicationUserClaim()
+						// Add DOB claim to the database
+						userClaim = new ApplicationUserClaim()
 						{
 							UserId = view.User.Id,
-							ClaimType = ClaimTypes.DateOfBirth,
-							ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"),
-							ClaimIssuer = issuer,
-							Active = true,
-							ModifiedDt = DateTime.Now,
-							CreateDt = DateTime.Now
-						});
-						logger.LogInformation($"Added new role({ClaimTypes.DateOfBirth}) to user account: {view.User.UserName}");
-					}
-					if (isCurrentUser) {
-						dobClaim = HttpContext.User.FindFirst(ClaimTypes.DateOfBirth);
-						if (dobClaim != null && dobClaim.Value != view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss")) {
-							((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(dobClaim);
-						}
-						((ClaimsIdentity)HttpContext.User.Identity)
-							.AddClaim(new Claim(ClaimTypes.DateOfBirth, view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimValueTypes.String, issuer));
+							ClaimType = ClaimTypes.DateOfBirth, ClaimValue = view.User.DOB.ToString("yyyy-MM-dd hh:mm:ss"), ClaimIssuer = issuer,
+							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+						};
+						userClaimRepo.Add(userClaim);
+						logger.LogInformation($"Added new claim({ClaimTypes.DateOfBirth}) to user account: {view.User.UserName}");
 					}
 
 					//TODO: Department still has issues when transitioning from null to not null
@@ -361,7 +353,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							userClaim.ModifiedDt = DateTime.Now;
 							userClaim.ClaimValue = view.User.Department;
 							userClaimRepo.Update(userClaim);
-							logger.LogInformation($"Updated role({claimTypesDepartment}) for user account: {view.User.UserName}");
+							logger.LogInformation($"Updated claim({claimTypesDepartment}) for user account: {view.User.UserName}");
 						}
 						else
 						{
@@ -370,28 +362,15 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					}
 					else {
 						if (view.User.Department != null) {
-							userClaimRepo.Add(new ApplicationUserClaim()
+							userClaim = new ApplicationUserClaim()
 							{
-								UserId = view.User.Id,
-								ClaimType = claimTypesDepartment,
-								ClaimValue = view.User.Department,
-								ClaimIssuer = issuer,
-								Active = true,
-								ModifiedDt = DateTime.Now,
-								CreateDt = DateTime.Now
-							});
-							logger.LogInformation($"Assigned new role({claimTypesDepartment}) to user account: {view.User.UserName}");
+								UserId = view.User.Id, 
+								ClaimType = claimTypesDepartment, ClaimValue = view.User.Department, ClaimIssuer = issuer,
+								Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+							};
+							userClaimRepo.Add(userClaim);
+							logger.LogInformation($"Assigned new claim({claimTypesDepartment}) to user account: {view.User.UserName}");
 						}
-					}
-					if (isCurrentUser) {
-						deptClaim = HttpContext.User.FindFirst(claimTypesDepartment);
-						if (deptClaim != null && view.User.Department != null && deptClaim.Value != view.User.Department)
-						{
-							((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(deptClaim);
-						}
-						if (view.User.Department != null)
-							((ClaimsIdentity)HttpContext.User.Identity)
-								.AddClaim(new Claim(claimTypesDepartment, view.User.Department, ClaimValueTypes.String, issuer));
 					}
 
 					//Add Role claim to database and to claims list of the user
@@ -409,20 +388,14 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 									claimId = (int)userClaimRepo.Add(new ApplicationUserClaim()
 									{
 										UserId = view.User.Id,
-										ClaimType = ClaimTypes.Role,
-										ClaimValue = role,
-										ClaimIssuer = issuer,
-										Active = true,
-										ModifiedDt = DateTime.Now,
-										CreateDt = DateTime.Now
+										ClaimType = ClaimTypes.Role, ClaimValue = role, ClaimIssuer = issuer,
+										Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
 									});
+
 									if (claimId > 0)
 										logger.LogInformation($"Assigned role({role}) to user account: {view.User.UserName}");
 									else
 										logger.LogError($"Error assigning role({role}) to user account: {view.User.UserName}");
-									if (isCurrentUser)
-										((ClaimsIdentity)HttpContext.User.Identity)
-											.AddClaim(new Claim(ClaimTypes.Role, role, ClaimValueTypes.String, issuer));
 								}
 							}
 						}
@@ -437,27 +410,14 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 								logger.LogInformation($"Removed role({r}) from user account: {view.User.UserName}");
 							else
 								logger.LogError($"Error removing role({r}) from account: {view.User.UserName}");
-							if (isCurrentUser) {
-								roleClaim = HttpContext.User.FindFirst(r);
-								((ClaimsIdentity)HttpContext.User.Identity).RemoveClaim(roleClaim);
-							}
 						}
 					}
 
 					// If we've updated the claims for the currently signed-in user, 
-					// then refresh Cookie by recreating the User Security Principal from the current Identity Principal
+					// then refresh Cookie by recreating the User Security Principal from the database
 					if (isCurrentUser)
 					{
-						userPrincipal = new ClaimsPrincipal(HttpContext.User.Identity);
-
-						// Sign In User and Refresh Cookie
-						await HttpContext.SignInAsync(
-							CookieAuthenticationDefaults.AuthenticationScheme,
-							userPrincipal,
-							new AuthenticationProperties()
-							{
-								IsPersistent = false
-							});
+						await identityManager.RefreshClaimsAsync(view.User, userClaimRepo.FindAll().Where(uc => uc.UserId == view.User.Id).ToList());
 						logger.LogInformation($"Refreshed cookie for user: {view.User.UserName}");
 					}
 
@@ -517,18 +477,15 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == login.UserName.ToUpper());
 					if (user != null)
 					{
-						valid = PasswordHash.ValidateHashedPassword(user.PasswordHash, login.Password);
+						//valid = PasswordHash.ValidateHashedPassword(user.PasswordHash, login.Password);
 
-						// Build the user Identity context, if they are validated
-						if (valid)
-						{
-							// Add user claims from the database
-							user.Claims = new List<ApplicationUserClaim>();
-							foreach (ApplicationUserClaim c in userClaimRepo.FindAll().Where(c => c.UserId == user.Id))
-								user.Claims.Add(c);
+						// Add user claims from the database
+						user.Claims = new List<ApplicationUserClaim>();
+						foreach (ApplicationUserClaim c in userClaimRepo.FindAll().Where(c => c.UserId == user.Id))
+							user.Claims.Add(c);
 
-							// Sign in the user
-							await identityManager.SignInAsync(user);
+						// Sign in the user, if there password is correct
+						if (await identityManager.SignInWithPasswordAsync(user, login.Password)) { 
 
 							logger.LogInformation($"Logged in user: {login.UserName}");
 							return LocalRedirect("/Home/LoginSuccess");
@@ -566,7 +523,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUser user;
-			ApplicationUserClaim userClaim;
+			//ApplicationUserClaim userClaim;
 			//AuthenticationProperties props = null;
 			const string issuer = "Local Authority";
 			int id = 0;
@@ -669,11 +626,11 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[HttpPost]
 		[Authorize]
 		[Route("/[controller]/Logout")]
-		public IActionResult Logout()
+		public async Task<IActionResult> Logout()
 		{
 			var redirectUrl = new { url = "/Home/Logout" };
 
-			HttpContext.SignOutAsync();
+			await identityManager.SignOutAsync(HttpContext.User.Identity.Name);
 			return Json(redirectUrl);
 		}
 
