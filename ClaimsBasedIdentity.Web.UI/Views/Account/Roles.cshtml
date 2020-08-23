@@ -1,0 +1,38 @@
+﻿@using System.Security.Claims
+@using ClaimsBasedIdentity.Data
+@using ClaimsBasedIdentity.Data.Interfaces
+@using ClaimsBasedIdentity.Data.POCO
+@model ICollection<ApplicationRole>
+
+@{
+	ViewData["Title"] = "Roles";
+}
+<div class="row">
+	<div class="col-md-3">
+		<h4>@ViewData["Title"]</h4>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-12">
+		<table id="RoleTable" class="table table-striped tabled-bordered table-sm table-hover">
+			<thead>
+				<tr class="colHeaders">
+					<th id="Name">Name</th>
+					<th id="Name">Users</th>
+				</tr>
+			</thead>
+			<tbody id="RoleList">
+				@foreach (ClaimsBasedIdentity.Data.POCO.ApplicationRole r in Model)
+				{
+					<tr id="@r.Id">
+						<td>@r.Name</td>
+						<td>0</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+

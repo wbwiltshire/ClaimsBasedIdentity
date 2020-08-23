@@ -61,7 +61,7 @@ namespace ClaimsBasedIdentity.Web.UI
             services.AddAuthorization(config => {
                 AuthorizationPolicyBuilder builder = new AuthorizationPolicyBuilder();
                 AuthorizationPolicy defaultAuthorizationPolicy = builder
-                    .RequireAuthenticatedUser()
+                    .RequireAuthenticatedUser()                                     // Require users to be authenticated by default
                     .Build();
                 config.DefaultPolicy = defaultAuthorizationPolicy;
                 config.AddPolicy("IsAuthorized", policy =>                          // Customer policy

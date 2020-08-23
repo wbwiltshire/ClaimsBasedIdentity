@@ -16,6 +16,7 @@ namespace ClaimsBasedIdentity.Data.Repository
         private ICollection<ApplicationUser> users = null;
         private ICollection<ApplicationUserClaim> userClaims = null;
         private ICollection<ApplicationControllerSecurity> controllerSecurity = null;
+        private ICollection<ApplicationRole> roles { get; set; }
 
         public DBConnection()
         {
@@ -44,6 +45,8 @@ namespace ClaimsBasedIdentity.Data.Repository
                 return (ICollection<TEntity>)userClaims;
             else if (typeof(TEntity) == typeof(ApplicationControllerSecurity))
                 return (ICollection<TEntity>)controllerSecurity;
+            else if (typeof(TEntity) == typeof(ApplicationRole))
+                return (ICollection<TEntity>)roles;
             else
                 return null;
         }
@@ -225,94 +228,99 @@ namespace ClaimsBasedIdentity.Data.Repository
             #endregion
 
 			#region Controller Security
-			controllerSecurity = new List<ApplicationControllerSecurity>();
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 1, IsIdentity = true },
-                RoleName = "Administrator",
-                ControllerName = "Secret",
-                ActionName = "AdminSecret",
-                Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
-            });
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 2, IsIdentity = true },
-                RoleName = "Administrator",
-                ControllerName = "Account",
-                ActionName = "Claims",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 3, IsIdentity = true },
-                RoleName = "Administrator",
-                ControllerName = "Account",
-                ActionName = "Index",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 4, IsIdentity = true },
-                RoleName = "Administrator",
-                ControllerName = "Account",
-                ActionName = "UserDetails",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 5, IsIdentity = true },
-                RoleName = "Administrator",
-                ControllerName = "Home",
-                ActionName = "LoginSuccess",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 6, IsIdentity = true },
-                RoleName = "Basic",
-                ControllerName = "Secret",
-                ActionName = "BasicSecret",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 7, IsIdentity = true },
-                RoleName = "Administrator",
-                ControllerName = "Account",
-                ActionName = "EditUser",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
+			controllerSecurity = new List<ApplicationControllerSecurity>() {
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 1, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Secret",
+                    ActionName = "AdminSecret",
+                    Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 2, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Account",
+                    ActionName = "Claims",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 3, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Account",
+                    ActionName = "Index",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 4, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Account",
+                    ActionName = "UserDetails",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 5, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Home",
+                    ActionName = "LoginSuccess",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 6, IsIdentity = true },
+                    RoleName = "Basic",
+                    ControllerName = "Secret",
+                    ActionName = "BasicSecret",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 7, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Account",
+                    ActionName = "EditUser",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 8, IsIdentity = true },
+                    RoleName = "Manager",
+                    ControllerName = "Secret",
+                    ActionName = "ManagerSecret",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                },
+                new ApplicationControllerSecurity() {
+                    PK = new PrimaryKey() { Key = 9, IsIdentity = true },
+                    RoleName = "Administrator",
+                    ControllerName = "Account",
+                    ActionName = "ResetPassword",
+                    Active = true,
+                    ModifiedDt = DateTime.Now,
+                    CreateDt = DateTime.Now
+                }
+            };
             #endregion
 
-            controllerSecurity.Add(new ApplicationControllerSecurity()
-            {
-                PK = new PrimaryKey() { Key = 8, IsIdentity = true },
-                RoleName = "Manager",
-                ControllerName = "Secret",
-                ActionName = "ManagerSecret",
-                Active = true,
-                ModifiedDt = DateTime.Now,
-                CreateDt = DateTime.Now
-            });
-
-            //Roles
-            ApplicationRole.Initialize();
+            //Roles            
+            roles = new List<ApplicationRole>() {
+                new ApplicationRole() { Id = 1, Name = "Administrator", ClaimType= ClaimTypes.Role },
+                new ApplicationRole() { Id = 2, Name = "Manager", ClaimType= ClaimTypes.Role },
+                new ApplicationRole() { Id = 3, Name = "Basic", ClaimType= ClaimTypes.Role }
+            };
         }
 
-        // Helper methods
-        private TEntity DeepCopy<TEntity>(TEntity source)
+    // Helper methods
+    private TEntity DeepCopy<TEntity>(TEntity source)
         {
 
             var DeserializeSettings = new JsonSerializerSettings { ObjectCreationHandling = ObjectCreationHandling.Replace };

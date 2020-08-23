@@ -267,14 +267,16 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		public IActionResult EditUser(int id)
 		{
 			ApplicationUserRepository userRepo;
+			ApplicationRoleRepository roleRepo;
 			ApplicationUserViewModel view = new ApplicationUserViewModel() { User = null, Roles = null };
 
 			try
 			{
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+				roleRepo = new ApplicationRoleRepository(settings, logger, dbc);
 
 				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
-				view.Roles = ApplicationRole.Roles;
+				view.Roles = roleRepo.FindAll();
 
 				// Update the RoleBadges
 				foreach (ApplicationUserClaim uc in view.User.Claims.Where(uc => uc.UserId == view.User.Id && uc.ClaimType == ClaimTypes.Role))
@@ -296,6 +298,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		public async Task<ActionResult> EditUser(ApplicationUserViewModel view)
 		{
 			ApplicationUserRepository userRepo;
+			ApplicationRoleRepository roleRepo;
 			ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUserClaim userClaim = null;
 			IList<string> currentRoles = null;
@@ -310,6 +313,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			{
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+				roleRepo = new ApplicationRoleRepository(settings, logger, dbc);
 
 				if (ModelState.IsValid)
 				{
@@ -429,7 +433,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					userRepo = new ApplicationUserRepository(settings, logger, dbc);
 
 					view.User = userRepo.FindByPKView(new PrimaryKey() { Key = view.User.Id, IsIdentity = true });
-					view.Roles = ApplicationRole.Roles;
+					view.Roles = roleRepo.FindAll();
 
 					// Update the RoleBadges
 					foreach (ApplicationUserClaim uc in view.User.Claims.Where(uc => uc.UserId == view.User.Id))
@@ -464,7 +468,6 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			ApplicationUserRepository userRepo = null;
 			ApplicationUserClaimRepository userClaimRepo = null;
 			ApplicationUser user = null;
-			bool valid = false;
 
 			try
 			{
@@ -633,6 +636,105 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			await identityManager.SignOutAsync(HttpContext.User.Identity.Name);
 			return Json(redirectUrl);
 		}
+
+		#region ResetPassword
+		[HttpGet]
+		[Authorize(Policy = "IsAuthorized")]
+		[Route("/[controller]/ResetPassword")]
+		public IActionResult ResetPassword()
+		{
+			ResetPasswordViewModel view = new ResetPasswordViewModel();
+
+			return View("ResetPassword", view);
+		}
+
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/PasswordResetSuccess")]
+		public IActionResult PasswordResetSuccess()
+		{
+			return View();
+		}
+
+		[HttpPost]
+		[Authorize(Policy = "IsAuthorized")]
+		[Route("/[controller]/ResetPassword")]
+		public async Task<IActionResult> ResetPassword(ResetPasswordViewModel view)
+		{
+			ApplicationUserRepository userRepo = null;
+			ApplicationUser user = null;
+
+			try
+			{
+				if (ModelState.IsValid)
+				{
+					if (view.Password == view.ConfirmPassword) {
+						if (view.UserName.ToUpper() != "ADMIN" && view.UserName.ToUpper() != "ADMINISTRATOR")
+						{
+							userRepo = new ApplicationUserRepository(settings, logger, dbc);
+							// Find user in database and validate there password				
+							user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == view.UserName.ToUpper());
+							if (user != null)
+							{
+								user.PasswordHash = PasswordHash.HashPassword(view.Password);
+								userRepo.Update(user);
+
+								RedirectToAction("Home", "ResetPasswordSuccess");
+							}
+							else
+							{
+								// User Doesn't exist
+								ModelState.AddModelError("UserName", "The user name does not exist!");
+								return View("ResetPassword", view);
+							}
+						}
+						else
+						{
+							// Can't reset Admin password
+							ModelState.AddModelError("UserName", "You can't reset the Admin users password!");
+							return View("ResetPassword", view);
+						}
+					}
+					else {
+						// Passwords don't match
+						ModelState.AddModelError("ConfirmPassword", "Confirm Password doesn't match New Password.");
+						return View("ResetPassword", view);
+
+					}
+				} 
+				else
+				{
+					return View("ResetPassword", view);
+				}
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+		}
+		#endregion
+
+
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/Roles")]
+		public IActionResult Roles()
+		{
+			ApplicationRoleRepository roleRepo;
+			ICollection<ApplicationRole> roles;
+
+			try
+			{
+				roleRepo = new ApplicationRoleRepository(settings, logger, dbc);
+				roles = roleRepo.FindAll();
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+			return View("Roles", roles);
+		}		
 
 		[HttpGet]
 		[Authorize]
