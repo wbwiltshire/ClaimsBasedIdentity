@@ -106,13 +106,13 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 			try
 			{
-					userRepo = new ApplicationUserRepository(settings, logger, dbc);
-					//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
+				userRepo = new ApplicationUserRepository(settings, logger, dbc);
+				//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
 
-					user = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
-					//user.Roles = new List<ApplicationRole>();
-					//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
-					//	user.Roles.Add(ur.ApplicationRole);
+				user = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				//user.Roles = new List<ApplicationRole>();
+				//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
+				//	user.Roles.Add(ur.ApplicationRole);
 			}
 			catch (Exception ex)
 			{
@@ -262,7 +262,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		#region /Account/EditUser
 		//GET: /Account/EditUser/{id}
 		[HttpGet]
-		[Authorize(Policy="IsAuthorized")]
+		[Authorize(Policy = "IsAuthorized")]
 		[Route("/[controller]/EditUser/{id:int}")]
 		public IActionResult EditUser(int id)
 		{
@@ -292,7 +292,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 		// POST: /Account/EditUser
 		[HttpPost]
-		[Authorize(Policy="IsAuthorized")]
+		[Authorize(Policy = "IsAuthorized")]
 		[Route("/[controller]/EditUser/{id:int}")]
 		[ValidateAntiForgeryToken]
 		public async Task<ActionResult> EditUser(ApplicationUserViewModel view)
@@ -302,12 +302,12 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			ApplicationUserClaimRepository userClaimRepo;
 			ApplicationUserClaim userClaim = null;
 			IList<string> currentRoles = null;
-			string role = String.Empty; 
+			string role = String.Empty;
 			int claimId = 0;
 			int rows = 0;
 			const string issuer = "Local Authority";
 			const string claimTypesDepartment = "Department";
-			bool isCurrentUser = view.User.UserName.ToUpper() == HttpContext.User.Identity.Name.ToUpper() ? true : false ;
+			bool isCurrentUser = view.User.UserName.ToUpper() == HttpContext.User.Identity.Name.ToUpper() ? true : false;
 
 			try
 			{
@@ -368,7 +368,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						if (view.User.Department != null) {
 							userClaim = new ApplicationUserClaim()
 							{
-								UserId = view.User.Id, 
+								UserId = view.User.Id,
 								ClaimType = claimTypesDepartment, ClaimValue = view.User.Department, ClaimIssuer = issuer,
 								Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
 							};
@@ -488,7 +488,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							user.Claims.Add(c);
 
 						// Sign in the user, if there password is correct
-						if (await identityManager.SignInWithPasswordAsync(user, login.Password)) { 
+						if (await identityManager.SignInWithPasswordAsync(user, login.Password)) {
 
 							logger.LogInformation($"Logged in user: {login.UserName}");
 							return LocalRedirect("/Home/LoginSuccess");
@@ -519,7 +519,6 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[HttpPost]
 		[AllowAnonymous]
 		[Route("/[controller]/Register")]
-		//[ValidateAntiForgeryToken]
 		[ValidateAntiForgeryToken]
 		public async Task<ActionResult> Register(RegisterViewModel register)
 		{
@@ -572,7 +571,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						});
 						user.Claims.Add(new ApplicationUserClaim()
 						{
-							UserId = id, 
+							UserId = id,
 							ClaimType = ClaimTypes.NameIdentifier, ClaimValue = id.ToString(), ClaimIssuer = issuer,
 							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
 						});
@@ -644,6 +643,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		public IActionResult ResetPassword()
 		{
 			ResetPasswordViewModel view = new ResetPasswordViewModel();
+			ApplicationUserRepository applicationUserRepository;
+
+			applicationUserRepository = new ApplicationUserRepository(settings, logger, dbc);
+			view.Users = applicationUserRepository.FindAll().Where(u => u.NormalizedUserName != "ADMIN" && u.NormalizedUserName != "ADMINISTRATOR").ToList();
 
 			return View("ResetPassword", view);
 		}
@@ -659,7 +662,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[HttpPost]
 		[Authorize(Policy = "IsAuthorized")]
 		[Route("/[controller]/ResetPassword")]
-		public async Task<IActionResult> ResetPassword(ResetPasswordViewModel view)
+		[ValidateAntiForgeryToken]
+		public IActionResult ResetPassword(ResetPasswordViewModel view)
 		{
 			ApplicationUserRepository userRepo = null;
 			ApplicationUser user = null;
@@ -674,19 +678,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							userRepo = new ApplicationUserRepository(settings, logger, dbc);
 							// Find user in database and validate there password				
 							user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == view.UserName.ToUpper());
-							if (user != null)
-							{
-								user.PasswordHash = PasswordHash.HashPassword(view.Password);
-								userRepo.Update(user);
+							user.PasswordHash = PasswordHash.HashPassword(view.Password);
+							userRepo.Update(user);
 
-								RedirectToAction("Home", "ResetPasswordSuccess");
-							}
-							else
-							{
-								// User Doesn't exist
-								ModelState.AddModelError("UserName", "The user name does not exist!");
-								return View("ResetPassword", view);
-							}
+							return RedirectToAction("PasswordResetSuccess", "Account");
 						}
 						else
 						{
@@ -709,11 +704,84 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			}
 			catch (Exception ex)
 			{
+				logger.LogError($"Exception: {ex.Message}");
 				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
 			}
+
 		}
 		#endregion
 
+		#region ChangePassword
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/ChangePassword")]
+		public IActionResult ChangePassword()
+		{
+			ChangePasswordViewModel view = new ChangePasswordViewModel();
+
+			return View("ChangePassword", view);
+		}
+
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/PasswordChangeSuccess")]
+		public IActionResult PasswordChangeSuccess()
+		{
+			return View();
+		}
+
+		[HttpPost]
+		[Authorize]
+		[Route("/[controller]/ChangePassword")]
+		[ValidateAntiForgeryToken]
+		public IActionResult ChangePassword(ChangePasswordViewModel view)
+		{
+			ApplicationUserRepository userRepo = null;
+			ApplicationUser user = null;
+
+			try
+			{
+				if (ModelState.IsValid)
+				{
+					if (view.OldPassword != view.NewPassword)
+					{
+						userRepo = new ApplicationUserRepository(settings, logger, dbc);
+
+						// Find user in database and validate there password				
+						user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == view.UserName.ToUpper());
+						if (PasswordHash.ValidateHashedPassword(user.PasswordHash, view.OldPassword))
+						{
+							user.PasswordHash = PasswordHash.HashPassword(view.NewPassword);
+							userRepo.Update(user);
+							return RedirectToAction("PasswordChangeSuccess", "Account");
+						}
+						else
+						{
+							// Old Password wrong
+							ModelState.AddModelError("OldPassword", "Password doesn't match our records.");
+							return View("ChangePassword", view);
+						}
+					}
+					else
+					{
+						// Passwords matched
+						ModelState.AddModelError("NewPassword", "New Password is the same as the Old Password.");
+						return View("ChangePassword", view);
+					}
+				}
+				else
+				{
+					return View("ChangePassword", view);
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogError($"Exception: {ex.Message}");
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+		}
+		#endregion
 
 		[HttpGet]
 		[Authorize]

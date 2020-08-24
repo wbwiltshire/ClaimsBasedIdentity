@@ -56,11 +56,31 @@ namespace ClaimsBasedIdentity.Web.UI.Models
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
         [DataType(DataType.Password)]
-        [Display(Name = "ConfirmPassword")]
+        [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; }
 
-    }
+        public ICollection<ApplicationUser> Users { get; set; }
 
+    }
+    public class ChangePasswordViewModel
+    {
+        [Required]
+        [Display(Name = "UserName")]
+        public string UserName { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Old Password")]
+        public string OldPassword { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "New Password")]
+        public string NewPassword { get; set; }
+
+    }
 
     public class ApplicationUserViewModel
     {

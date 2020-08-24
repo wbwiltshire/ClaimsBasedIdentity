@@ -32,6 +32,10 @@
 			</div>
 		}
 		<div>
+			<label class="col-md-3 text-right">Password:</label>
+			<a href="/Account/ChangePassword" class="btn btn-success btn-sm">Change Password</a>
+		</div>
+		<div>
 			<label asp-for="DOB" class="col-md-3 text-right">@Html.DisplayNameFor(m => m.DOB):</label>
 			<label class="text-normal">@Model.DOB.ToString("MM/dd/yyyy")</label>
 		</div>
