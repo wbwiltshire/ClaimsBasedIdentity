@@ -457,7 +457,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[HttpGet]
 		[AllowAnonymous]
 		[Route("/[controller]/LoginRegister")]
-		public IActionResult LoginRegister()
+		public IActionResult LoginRegister(string action = null, string ReturnUrl = null)
 		{
 			return View();
 		}
@@ -466,7 +466,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[AllowAnonymous]
 		[Route("/[controller]/Login")]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Login(LoginViewModel login)
+		public async Task<IActionResult> Login(LoginViewModel login, string ReturnUrl = null)
 		{
 			ApplicationUserRepository userRepo = null;
 			ApplicationUserClaimRepository userClaimRepo = null;
@@ -493,11 +493,15 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							user.Claims.Add(c);
 
 						// Sign in the user, if there password is correct
-						if (await identityManager.SignInWithPasswordAsync(user, login.Password)) {
+						if (await identityManager.SignInWithPasswordAsync(user, login.Password))
+						{
 
 							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({user.UserName}) logged into application." });
 							logger.LogInformation($"Logged in user: {login.UserName}");
-							return LocalRedirect("/Home/LoginSuccess");
+							if (ReturnUrl == null) 
+								return LocalRedirect("/Home/LoginSuccess");
+							else 
+								return LocalRedirect($"{ReturnUrl}");
 						}
 						else
 						{
@@ -513,7 +517,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					}
 				}
 				else
+				{
 					logger.LogError("Invalid ModelState: AccountController.Login()");
+					return View($"LoginRegister?action=login?ReturnUrl={ReturnUrl}");
+				}
 			}
 			catch (Exception ex)
 			{
@@ -527,7 +534,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[AllowAnonymous]
 		[Route("/[controller]/Register")]
 		[ValidateAntiForgeryToken]
-		public async Task<ActionResult> Register(RegisterViewModel register)
+		public async Task<ActionResult> Register(RegisterViewModel register, string ReturnUrl = null)
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
@@ -604,7 +611,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						// Sign in the user
 						await identityManager.SignInAsync(user);
 
-						return RedirectToAction("LoginSuccess", "Home");
+						if (ReturnUrl == null)
+							return LocalRedirect("/Home/LoginSuccess");
+						else
+							return LocalRedirect($"{ReturnUrl}");
 					}
 					else
 					{
