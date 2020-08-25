@@ -17,6 +17,7 @@ namespace ClaimsBasedIdentity.Data.Repository
         private ICollection<ApplicationUserClaim> userClaims = null;
         private ICollection<ApplicationControllerSecurity> controllerSecurity = null;
         private ICollection<ApplicationRole> roles { get; set; }
+        private ICollection<ApplicationAuditLog> logs { get; set; }
 
         public DBConnection()
         {
@@ -47,6 +48,8 @@ namespace ClaimsBasedIdentity.Data.Repository
                 return (ICollection<TEntity>)controllerSecurity;
             else if (typeof(TEntity) == typeof(ApplicationRole))
                 return (ICollection<TEntity>)roles;
+            else if (typeof(TEntity) == typeof(ApplicationAuditLog))
+                return (ICollection<TEntity>)logs;
             else
                 return null;
         }
@@ -69,6 +72,7 @@ namespace ClaimsBasedIdentity.Data.Repository
 
             ApplicationUser user = null;
             ApplicationUserClaim userClaim = null;
+            ApplicationAuditLog auditLog = null;
 
             if (typeof(TEntity) == typeof(ApplicationUser))
             {
@@ -94,6 +98,19 @@ namespace ClaimsBasedIdentity.Data.Repository
                 userClaim.PK = key;
                 userClaim.ModifiedDt = DateTime.Now; userClaim.CreateDt = DateTime.Now;
                 userClaims.Add(userClaim);
+            }
+            else if (typeof(TEntity) == typeof(ApplicationAuditLog))
+            {
+                if (logs.Count == 0)
+                    newId = 1;
+                else
+                    newId = logs.Max(u => u.Id) + 1;
+
+                auditLog = entity as ApplicationAuditLog;
+                key.Key = newId;
+                auditLog.PK = key;
+                auditLog.CreateDt = DateTime.Now;
+                logs.Add(auditLog);
             }
 
             return newId;
@@ -311,12 +328,16 @@ namespace ClaimsBasedIdentity.Data.Repository
             };
             #endregion
 
-            //Roles            
+            // Roles            
             roles = new List<ApplicationRole>() {
                 new ApplicationRole() { Id = 1, Name = "Administrator", ClaimType= ClaimTypes.Role },
                 new ApplicationRole() { Id = 2, Name = "Manager", ClaimType= ClaimTypes.Role },
                 new ApplicationRole() { Id = 3, Name = "Basic", ClaimType= ClaimTypes.Role }
             };
+
+            // Logs
+            logs = new List<ApplicationAuditLog>();
+
         }
 
     // Helper methods

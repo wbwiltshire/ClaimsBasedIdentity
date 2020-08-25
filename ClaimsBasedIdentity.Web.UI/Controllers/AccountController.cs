@@ -300,6 +300,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			ApplicationUserRepository userRepo;
 			ApplicationRoleRepository roleRepo;
 			ApplicationUserClaimRepository userClaimRepo;
+			ApplicationAuditLogRepository logRepo;
 			ApplicationUserClaim userClaim = null;
 			IList<string> currentRoles = null;
 			string role = String.Empty;
@@ -314,6 +315,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
 				roleRepo = new ApplicationRoleRepository(settings, logger, dbc);
+				logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
 
 				if (ModelState.IsValid)
 				{
@@ -422,6 +424,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					if (isCurrentUser)
 					{
 						await identityManager.RefreshClaimsAsync(view.User, userClaimRepo.FindAll().Where(uc => uc.UserId == view.User.Id).ToList());
+						logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({view.User.UserName}) logged into application with refreshed claims." });
 						logger.LogInformation($"Refreshed cookie for user: {view.User.UserName}");
 					}
 
@@ -467,6 +470,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		{
 			ApplicationUserRepository userRepo = null;
 			ApplicationUserClaimRepository userClaimRepo = null;
+			ApplicationAuditLogRepository logRepo = null;
 			ApplicationUser user = null;
 
 			try
@@ -475,6 +479,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 				{
 					userRepo = new ApplicationUserRepository(settings, logger, dbc);
 					userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+					logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
 
 					// Find user in database and validate there password				
 					user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == login.UserName.ToUpper());
@@ -490,12 +495,14 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						// Sign in the user, if there password is correct
 						if (await identityManager.SignInWithPasswordAsync(user, login.Password)) {
 
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({user.UserName}) logged into application." });
 							logger.LogInformation($"Logged in user: {login.UserName}");
 							return LocalRedirect("/Home/LoginSuccess");
 						}
 						else
 						{
 							logger.LogError($"Invalid user name / password combination: {login.UserName}");
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Invalid user name / password combination for User ({user.UserName})." });
 							return LocalRedirect("/Home/InvalidCredentials");
 						}
 					}
@@ -630,9 +637,22 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		[Route("/[controller]/Logout")]
 		public async Task<IActionResult> Logout()
 		{
+			ApplicationAuditLogRepository logRepo;
 			var redirectUrl = new { url = "/Home/Logout" };
 
-			await identityManager.SignOutAsync(HttpContext.User.Identity.Name);
+			try
+			{
+				logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
+
+				await identityManager.SignOutAsync(HttpContext.User.Identity.Name);
+				logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({HttpContext.User.Identity.Name}) logged out of the application." });
+
+			}
+			catch (Exception ex)
+			{
+				logger.LogError($"Exception logging user({HttpContext.User.Identity.Name}) out of the application: {ex.Message}");
+				return RedirectToAction("Error");
+			}
 			return Json(redirectUrl);
 		}
 
@@ -696,7 +716,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						return View("ResetPassword", view);
 
 					}
-				} 
+				}
 				else
 				{
 					return View("ResetPassword", view);
@@ -802,7 +822,28 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			}
 
 			return View("Roles", roles);
-		}		
+		}
+
+		[HttpGet]
+		[Authorize]
+		[Route("/[controller]/AuditLog")]
+		public IActionResult AuditLog()
+		{
+			ApplicationAuditLogRepository logRepo;
+			IPager<ApplicationAuditLog> pager;
+			
+			try
+			{
+				logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
+				pager = logRepo.FindAll(new Pager<ApplicationAuditLog>() { PageNbr = 0, PageSize = 20 });
+			}
+			catch (Exception ex)
+			{
+				throw (Exception)Activator.CreateInstance(ex.GetType(), ex.Message + ex.StackTrace);
+			}
+
+			return View("AuditLog", pager);
+		}
 
 		[HttpGet]
 		[Authorize]
@@ -814,8 +855,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 		[HttpGet]
 		[Authorize]
-		[Route("/[controller]/Forbidden")]
-		public IActionResult Forbidden()
+		[Route("/[controller]/AccessDenied")]
+		public IActionResult AccessDenied()
 		{
 			return View();
 		}

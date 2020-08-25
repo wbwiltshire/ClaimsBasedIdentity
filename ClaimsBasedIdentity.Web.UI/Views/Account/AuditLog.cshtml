@@ -1,0 +1,71 @@
+@using ClaimsBasedIdentity.Data
+@using ClaimsBasedIdentity.Data.Interfaces
+@using ClaimsBasedIdentity.Data.POCO
+@model IPager<ApplicationAuditLog>
+
+@{
+     ViewData["Title"] = "Audit Log";
+}
+<div class="row">
+	<div class="col-md-3">
+		<h4>@ViewData["Title"]</h4>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-12">
+		<a id="refresh" class="btn btn-primary btn-sm" href="#" )>Refresh</a>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-12">
+		<table id="AuditLogTable" ctTotalItems="@Model.RowCount" class="table table-striped tabled-bordered table-sm table-hover">
+			<thead>
+				<tr class="colHeaders">
+					<th id="Name">Category</th>
+					<th id="Name">Description</th>
+					<th id="Name">Log Date</th>
+				</tr>
+			</thead>
+			<tbody id="UserList">
+				@foreach (ApplicationAuditLog l in Model.Entities)
+                    {
+				<tr id="@l.Id">
+					<td>@l.CategoryId</td>
+					<td>@l.Description</td>
+					<td>@l.CreateDt.ToString("MM/dd/yyyy HH:mm:ss")</td>
+				</tr>
+                    }
+				@if (Model.Entities.Count == 0)
+                    {
+				<tr id="noRecordsFound"><td class="lead text-left text-danger" colspan="4">No Records Found!</td></tr>
+                    }
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-12">
+		<br />
+	</div>
+</div>
+<script id="auditLogListHGrid" type="text/x-handlebars-template">
+	{{#AuditLogList}}
+	<tr id="{{id}}">
+		<td>{{categoryId}}</td>
+		<td>{{description}}</td>
+		<td>{{CreateDt}}</td>
+	</tr>
+	{{/AuditLogList}}
+</script>
+@section scripts {
+	<script type="text/javascript" src="~/lib/moment/moment.js"></script>
+	<script type="text/javascript" src="~/lib/handlebars/handlebars.js"></script>
+	<script type="text/javascript" src="~/js/ajaxcommon.js"></script>
+	<script type="text/javascript" src="~/js/jscommon.js"></script>
+	<script type="text/javascript" src="~/lib/turbotables.js"></script>
+	<script type="text/javascript" src="~/js/handlebarscommon.js"></script>
+	<script type="text/javascript" src="~/js/auditlog.js"></script>
+}
