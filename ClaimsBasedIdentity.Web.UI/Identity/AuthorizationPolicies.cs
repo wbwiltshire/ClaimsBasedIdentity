@@ -40,7 +40,7 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 		{
             contextAccessor = hca;
             logger = l;
-            settings = null;
+            settings = s.Value;
             dbc = (DBConnection)d;
 		}
 

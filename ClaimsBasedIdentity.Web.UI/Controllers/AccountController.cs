@@ -157,6 +157,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
+			ApplicationAuditLogRepository logRepo;
 			ApplicationUserClaim userClaim = null;
 			ClaimsPrincipal userPrincipal = null;
 			Claim dobClaim = null; Claim deptClaim = null;
@@ -167,6 +168,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			{
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				userClaimRepo = new ApplicationUserClaimRepository(settings, logger, dbc);
+				logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
 
 				if (ModelState.IsValid)
 				{
@@ -224,17 +226,22 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							.AddClaim(new Claim(claimTypesDepartment, view.User.Department, ClaimValueTypes.String, issuer));
 					}
 
+					// We've updated the claims for the currently signed-in user, 
+					// So refresh Cookie by recreating the User Security Principal from the database
+					await identityManager.RefreshClaimsAsync(view.User, userClaimRepo.FindAll().Where(uc => uc.UserId == view.User.Id).ToList());
+					logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({view.User.UserName}) logged into application with refreshed claims." });
+
 					// Refresh Cookie by recreating the User Security Principal from the current Identity Principal
-					userPrincipal = new ClaimsPrincipal(HttpContext.User.Identity);
+					//userPrincipal = new ClaimsPrincipal(HttpContext.User.Identity);
 
 					// Sign In User
-					await HttpContext.SignInAsync(
-						CookieAuthenticationDefaults.AuthenticationScheme,
-						userPrincipal,
-						new AuthenticationProperties()
-						{
-							IsPersistent = false
-						});
+					//await HttpContext.SignInAsync(
+					//	CookieAuthenticationDefaults.AuthenticationScheme,
+					//	userPrincipal,
+					//	new AuthenticationProperties()
+					//	{
+					//		IsPersistent = false
+					//	});
 
 					logger.LogInformation($"Refreshed cookie for user: {view.User.UserName}");
 
@@ -496,7 +503,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						if (await identityManager.SignInWithPasswordAsync(user, login.Password))
 						{
 
-							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({user.UserName}) logged into application." });
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({user.UserName}) logged into application.", UserName = user.UserName });
 							logger.LogInformation($"Logged in user: {login.UserName}");
 							if (ReturnUrl == null) 
 								return LocalRedirect("/Home/LoginSuccess");
@@ -506,7 +513,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						else
 						{
 							logger.LogError($"Invalid user name / password combination: {login.UserName}");
-							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Invalid user name / password combination for User ({user.UserName})." });
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Invalid user name / password combination for User ({user.UserName}).", UserName = user.UserName });
 							return LocalRedirect("/Home/InvalidCredentials");
 						}
 					}
@@ -696,6 +703,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		public IActionResult ResetPassword(ResetPasswordViewModel view)
 		{
 			ApplicationUserRepository userRepo = null;
+			ApplicationAuditLogRepository logRepo = null;
 			ApplicationUser user = null;
 
 			try
@@ -706,11 +714,12 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						if (view.UserName.ToUpper() != "ADMIN" && view.UserName.ToUpper() != "ADMINISTRATOR")
 						{
 							userRepo = new ApplicationUserRepository(settings, logger, dbc);
+							logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
 							// Find user in database and validate there password				
 							user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == view.UserName.ToUpper());
 							user.PasswordHash = PasswordHash.HashPassword(view.Password);
 							userRepo.Update(user);
-
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Reset password for User ({HttpContext.User.Identity.Name})." });
 							return RedirectToAction("PasswordResetSuccess", "Account");
 						}
 						else
@@ -767,6 +776,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		public IActionResult ChangePassword(ChangePasswordViewModel view)
 		{
 			ApplicationUserRepository userRepo = null;
+			ApplicationAuditLogRepository logRepo = null;
 			ApplicationUser user = null;
 
 			try
@@ -776,6 +786,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 					if (view.OldPassword != view.NewPassword)
 					{
 						userRepo = new ApplicationUserRepository(settings, logger, dbc);
+						logRepo = new ApplicationAuditLogRepository(settings, logger, dbc);
 
 						// Find user in database and validate there password				
 						user = (userRepo.FindAll()).FirstOrDefault(u => u.NormalizedUserName == view.UserName.ToUpper());
@@ -783,11 +794,14 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						{
 							user.PasswordHash = PasswordHash.HashPassword(view.NewPassword);
 							userRepo.Update(user);
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Changed password for User ({HttpContext.User.Identity.Name})." });
+
 							return RedirectToAction("PasswordChangeSuccess", "Account");
 						}
 						else
 						{
 							// Old Password wrong
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Old password didn't match for User ({HttpContext.User.Identity.Name}) while changing password." });
 							ModelState.AddModelError("OldPassword", "Password doesn't match our records.");
 							return View("ChangePassword", view);
 						}
