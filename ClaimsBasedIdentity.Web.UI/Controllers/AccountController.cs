@@ -503,8 +503,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						if (await identityManager.SignInWithPasswordAsync(user, login.Password))
 						{
 
-							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({user.UserName}) logged into application.", UserName = user.UserName });
-							logger.LogInformation($"Logged in user: {login.UserName}");
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"User ({user.UserName}) logged into application at IP address: {HttpContext.Connection.RemoteIpAddress}.", UserName = user.UserName });
+							logger.LogInformation($"Logged in user: {login.UserName} at IP address: {HttpContext.Connection.RemoteIpAddress}");
 							if (ReturnUrl == null) 
 								return LocalRedirect("/Home/LoginSuccess");
 							else 
@@ -512,14 +512,14 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						}
 						else
 						{
-							logger.LogError($"Invalid user name / password combination: {login.UserName}");
-							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Invalid user name / password combination for User ({user.UserName}).", UserName = user.UserName });
+							logger.LogError($"Invalid user name / password combination: {login.UserName} at IP address {HttpContext.Connection.RemoteIpAddress}");
+							logRepo.Add(new ApplicationAuditLog() { CategoryId = 1, Description = $"Invalid user name / password combination for User ({user.UserName}) at IP address {HttpContext.Connection.RemoteIpAddress}.", UserName = user.UserName });
 							return LocalRedirect("/Home/InvalidCredentials");
 						}
 					}
 					else
 					{
-						logger.LogError($"Invalid user name / password combination: {login.UserName}");
+						logger.LogError($"Invalid user name / password combination: {login.UserName} at IP address: {HttpContext.Connection.RemoteIpAddress}");
 						return LocalRedirect("/Home/InvalidCredentials");
 					}
 				}
@@ -577,7 +577,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 							Claims = new List<ApplicationUserClaim>()
 						};
 
-						// NOTE: This shoudl be wrapped in a Unit of Work
+						// NOTE: This should be wrapped in a Unit of Work
 						// Add User to the database
 						user.PasswordHash = PasswordHash.HashPassword(register.Password);
 						id = (int)userRepo.Add(user);
@@ -617,6 +617,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 						// Sign in the user
 						await identityManager.SignInAsync(user);
+						logger.LogInformation($"Logged in user: {user.UserName} at IP address: {HttpContext.Connection.RemoteIpAddress}");
 
 						if (ReturnUrl == null)
 							return LocalRedirect("/Home/LoginSuccess");

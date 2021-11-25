@@ -51,7 +51,7 @@ namespace ClaimsBasedIdentity.Web.UI
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
                     options =>
                     {
-                        options.Cookie.Name = "Identity.Cookie";
+                        options.Cookie.Name = "ClaimsBasedIdentity.Cookie";
                         options.LoginPath = new PathString("/Account/LoginRegister");
                         options.AccessDeniedPath = new PathString("/Account/Forbidden/");
                         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
