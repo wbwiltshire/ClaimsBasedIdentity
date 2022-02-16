@@ -20,6 +20,7 @@ using Serilog;
 namespace ClaimsBasedIdentity.Web.UI.Controllers
 {
     [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class SecretController : Controller
     {
         private readonly ILogger<SecretController> logger;
@@ -102,6 +103,27 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
         public IActionResult ClaimsSecret()
         {
             ViewData["Message"] = "This information is for the IT Department only!";
+            return View();
+        }
+
+        [HttpGet]
+        [Authorize]
+        [Route("/[controller]/GenerateError")]
+        public IActionResult GenerateError()
+        {
+            try
+            {
+                // simulate an error.  Development should get a dump and Production should get the Error page
+                if (settings.Serilog is not null)
+                    throw new NotImplementedException("GeneratedError");
+            }
+            catch (Exception ex)
+            {
+                // Log and rethrow the exception
+                logger.LogError($"Exception: {ex.Message}");
+                throw;
+            }
+
             return View();
         }
 

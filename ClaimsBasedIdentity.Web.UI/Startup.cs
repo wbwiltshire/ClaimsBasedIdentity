@@ -15,13 +15,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using ClaimsBasedIdentity.Data.POCO;
 using ClaimsBasedIdentity.Web.UI.Identity;
-using System.Data;
 using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.Repository;
 
 namespace ClaimsBasedIdentity.Web.UI
 {
-    public class Startup
+    public class Startup 
     {
         public Startup(IConfiguration configuration)
         {
@@ -38,9 +37,11 @@ namespace ClaimsBasedIdentity.Web.UI
             services.Configure<AppSettingsConfiguration>(Configuration);
 
             // Needed by IsAuthorized Custom Authorization Policy
-            services.AddHttpContextAccessor();                                      
+            services.AddHttpContextAccessor();     
+            
             // Initiliaze Data Repository
             services.AddSingleton<IDBConnection, DBConnection>();
+
             // Custom Authorization Policy Handlers
             services.AddSingleton<IAuthorizationHandler, IsAuthorizedHandler>();
             services.AddSingleton<IAuthorizationHandler, IsAdultHandler>();
@@ -55,8 +56,31 @@ namespace ClaimsBasedIdentity.Web.UI
                         options.LoginPath = new PathString("/Account/LoginRegister");
                         options.AccessDeniedPath = new PathString("/Account/Forbidden/");
                         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                        
+                        // Don't redirect unauthorized Webapi calls to login page
+                        options.Events.OnRedirectToLogin = context =>
+                        {
+                            if (context.Request.Path.StartsWithSegments("/api")) {
+                                context.Response.Clear();
+                                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                return Task.CompletedTask;
+                            }
+                            context.Response.Redirect(context.RedirectUri);
+                            return Task.CompletedTask;
+                        };
                     }
-                );
+                )
+                .AddCookie("Webapi", options => {
+                    // Need this so unauthorized Webapi call throws a 401
+                    //options.LoginPath = PathString.Empty;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.Clear();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    };
+                });
 
             services.AddAuthorization(config => {
                 AuthorizationPolicyBuilder builder = new AuthorizationPolicyBuilder();
@@ -75,6 +99,10 @@ namespace ClaimsBasedIdentity.Web.UI
                 );
             });
 
+            // Add Swagger service
+            services.AddSwaggerGen();
+
+            // Add MVC and Razore runtime compilation support
             services.AddControllersWithViews()
                 .AddRazorRuntimeCompilation();
         }
@@ -85,6 +113,10 @@ namespace ClaimsBasedIdentity.Web.UI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // Add Swagger middleware to application (localhost:<port>//swagger/index.html
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
             else
             {
@@ -92,6 +124,8 @@ namespace ClaimsBasedIdentity.Web.UI
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            // Include standard middleware
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();

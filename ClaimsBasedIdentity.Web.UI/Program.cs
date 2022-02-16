@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -15,9 +16,18 @@ namespace ClaimsBasedIdentity.Web.UI
     {
         public static void Main(string[] args)
         {
+            // Get the program version number from the Assembly
+            Dictionary<string, string> newVariables = new Dictionary<string, string>();
+            string version = Assembly.GetEntryAssembly()?
+                                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                                .InformationalVersion
+                                .ToString();
+            newVariables.Add("Version", version);
+
             var configuration = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile(path: "appsettings.json", optional: false, reloadOnChange: true)
+                    .AddEnvironmentVariables()
                     .Build();
 
             Log.Logger = new LoggerConfiguration()
@@ -29,7 +39,7 @@ namespace ClaimsBasedIdentity.Web.UI
             try
             {
                 Log.Information("Starting Claims Based Identity");
-                CreateHostBuilder(args).Build().Run();
+                CreateHostBuilder(args, newVariables).Build().Run();
             }
             catch (Exception ex)
             {
@@ -41,9 +51,14 @@ namespace ClaimsBasedIdentity.Web.UI
             }
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
+        // Create a lambda to build the Host
+        public static IHostBuilder CreateHostBuilder(string[] args, Dictionary<string, string> newVariables) =>
             Host.CreateDefaultBuilder(args)
                 .UseSerilog()
+                .ConfigureAppConfiguration(config =>
+                {
+                    config.AddInMemoryCollection(newVariables);
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseContentRoot(Directory.GetCurrentDirectory())

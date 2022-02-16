@@ -4,9 +4,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
@@ -16,13 +20,11 @@ using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.POCO;
 using ClaimsBasedIdentity.Data.Repository;
 using ClaimsBasedIdentity.Web.UI.Identity;
-using System.Runtime.CompilerServices;
-using System.Reflection.Metadata.Ecma335;
-using Microsoft.AspNetCore.Identity;
 
 namespace ClaimsBasedIdentity.Web.UI.Controllers
 {
 	[Authorize]
+	[ApiExplorerSettings(IgnoreApi = true)]
 	public class AccountController : Controller
 	{
 		private readonly ILogger<AccountController> logger;
@@ -648,9 +650,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		{
 			return View();
 		}
-		#endregion
+        #endregion
 
-		[HttpPost]
+        #region Logout
+        [HttpPost]
 		[Authorize]
 		[Route("/[controller]/Logout")]
 		public async Task<IActionResult> Logout()
@@ -673,9 +676,10 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			}
 			return Json(redirectUrl);
 		}
+        #endregion
 
-		#region ResetPassword
-		[HttpGet]
+        #region ResetPassword
+        [HttpGet]
 		[Authorize(Policy = "IsAuthorized")]
 		[Route("/[controller]/ResetPassword")]
 		public IActionResult ResetPassword()
