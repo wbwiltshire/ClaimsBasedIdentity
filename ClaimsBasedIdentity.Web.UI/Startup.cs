@@ -17,6 +17,7 @@ using ClaimsBasedIdentity.Data.POCO;
 using ClaimsBasedIdentity.Web.UI.Identity;
 using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.Repository;
+using HashidsNet;
 
 namespace ClaimsBasedIdentity.Web.UI
 {
@@ -37,8 +38,11 @@ namespace ClaimsBasedIdentity.Web.UI
             services.Configure<AppSettingsConfiguration>(Configuration);
 
             // Needed by IsAuthorized Custom Authorization Policy
-            services.AddHttpContextAccessor();     
-            
+            services.AddHttpContextAccessor();
+
+            // Initialize Hashids with Salt value (Note: this is a terribel Salt value) and Hash Id length
+            services.AddSingleton<IHashids>(_ => new Hashids("TopSecret", 10));
+
             // Initiliaze Data Repository
             services.AddSingleton<IDBConnection, DBConnection>();
 
@@ -54,7 +58,7 @@ namespace ClaimsBasedIdentity.Web.UI
                     {
                         options.Cookie.Name = "ClaimsBasedIdentity.Cookie";
                         options.LoginPath = new PathString("/Account/LoginRegister");
-                        options.AccessDeniedPath = new PathString("/Account/Forbidden/");
+                        options.AccessDeniedPath = new PathString("/Account/AccessDenied/");
                         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                         
                         // Don't redirect unauthorized Webapi calls to login page

@@ -20,6 +20,7 @@ using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.POCO;
 using ClaimsBasedIdentity.Data.Repository;
 using ClaimsBasedIdentity.Web.UI.Identity;
+using HashidsNet;
 
 namespace ClaimsBasedIdentity.Web.UI.Controllers
 {
@@ -31,13 +32,15 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		private readonly AppSettingsConfiguration settings;
 		private readonly IDBConnection dbc;
 		private readonly IIdentityManager identityManager;
+		private readonly IHashids hashIds;
 
-		public AccountController(ILogger<AccountController> l, IOptions<AppSettingsConfiguration> s, IIdentityManager m, IDBConnection d)
+		public AccountController(ILogger<AccountController> l, IOptions<AppSettingsConfiguration> s, IIdentityManager m, IDBConnection d, IHashids h)
 		{
 			logger = l;
 			settings = s.Value;
 			identityManager = m;
 			dbc = d;
+			hashIds = h;
 		}
 
 		#region /Account/Index
@@ -69,8 +72,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		//GET: /Account/UserProfile/{id}
 		[HttpGet]
 		[Authorize]
-		[Route("/[controller]/UserProfile/{id:int}")]
-		public IActionResult UserProfile(int id)
+		[Route("/[controller]/UserProfile/{id}")]
+		public IActionResult UserProfile(string id)
 		{
 			ApplicationUserRepository userRepo;
 			//ApplicationUserRoleRepository userRoleRepo;
@@ -81,7 +84,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
 
-				user = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				user = userRepo.FindByPKView(new PrimaryKey() { Key = hashIds.Decode(id).FirstOrDefault(), IsIdentity = true });
 				//user.Roles = new List<ApplicationRole>();
 				//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
 				//	user.Roles.Add(ur.ApplicationRole);
@@ -99,8 +102,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		//GET: /Account/UserDetails/{id}
 		[HttpGet]
 		[Authorize(Policy = "IsAuthorized")]
-		[Route("/[controller]/UserDetails/{id:int}")]
-		public IActionResult UserDetails(int id)
+		[Route("/[controller]/UserDetails/{id}")]
+		public IActionResult UserDetails(string id)
 		{
 			ApplicationUserRepository userRepo;
 			//ApplicationUserRoleRepository userRoleRepo;
@@ -111,7 +114,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				//userRoleRepo = new ApplicationUserRoleRepository(settings, logger, dbc);
 
-				user = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				user = userRepo.FindByPKView(new PrimaryKey() { Key = hashIds.Decode(id).FirstOrDefault(), IsIdentity = true });
 				//user.Roles = new List<ApplicationRole>();
 				//foreach (ApplicationUserRole ur in (await userRoleRepo.FindAllView()).Where(r => r.UserId == user.Id))
 				//	user.Roles.Add(ur.ApplicationRole);
@@ -129,8 +132,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		//GET: /Account/EditProfile/{id}
 		[HttpGet]
 		[Authorize]
-		[Route("/[controller]/EditProfile/{id:int}")]
-		public IActionResult EditProfile(int id)
+		[Route("/[controller]/EditProfile/{id}")]
+		public IActionResult EditProfile(string id)
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserViewModel view = new ApplicationUserViewModel() { User = null, Roles = null };
@@ -139,7 +142,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 			{
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 
-				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = hashIds.Decode(id).FirstOrDefault(), IsIdentity = true });
 				//view.Roles = ApplicationRole.Roles;
 			}
 			catch (Exception ex)
@@ -153,15 +156,16 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		// POST: /Account/EditProfile
 		[HttpPost]
 		[Authorize]
-		[Route("/[controller]/EditProfile/{id:int}")]
+		[Route("/[controller]/EditProfile/{id}")]
 		[ValidateAntiForgeryToken]
 		public async Task<ActionResult> EditProfile(ApplicationUserViewModel view)
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationUserClaimRepository userClaimRepo;
 			ApplicationAuditLogRepository logRepo;
+			ApplicationUser user;
 			ApplicationUserClaim userClaim = null;
-			ClaimsPrincipal userPrincipal = null;
+			//ClaimsPrincipal userPrincipal = null;
 			Claim dobClaim = null; Claim deptClaim = null;
 			const string issuer = "Local Authority";
 			const string claimTypesDepartment = "Department";
@@ -247,7 +251,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 					logger.LogInformation($"Refreshed cookie for user: {view.User.UserName}");
 
-					return RedirectToAction("LoginSuccess", "Home");
+					user = new ApplicationUser(hashIds) { Id = view.User.Id };
+					return LocalRedirect($"/Account/UserProfile/{user.HashId}");
 				}
 				else
 				{
@@ -272,8 +277,8 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		//GET: /Account/EditUser/{id}
 		[HttpGet]
 		[Authorize(Policy = "IsAuthorized")]
-		[Route("/[controller]/EditUser/{id:int}")]
-		public IActionResult EditUser(int id)
+		[Route("/[controller]/EditUser/{id}")]
+		public IActionResult EditUser(string id)
 		{
 			ApplicationUserRepository userRepo;
 			ApplicationRoleRepository roleRepo;
@@ -284,7 +289,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 				userRepo = new ApplicationUserRepository(settings, logger, dbc);
 				roleRepo = new ApplicationRoleRepository(settings, logger, dbc);
 
-				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = id, IsIdentity = true });
+				view.User = userRepo.FindByPKView(new PrimaryKey() { Key = hashIds.Decode(id).FirstOrDefault(), IsIdentity = true });
 				view.Roles = roleRepo.FindAll();
 
 				// Update the RoleBadges
@@ -302,7 +307,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 		// POST: /Account/EditUser
 		[HttpPost]
 		[Authorize(Policy = "IsAuthorized")]
-		[Route("/[controller]/EditUser/{id:int}")]
+		[Route("/[controller]/EditUser/{id}")]
 		[ValidateAntiForgeryToken]
 		public async Task<ActionResult> EditUser(ApplicationUserViewModel view)
 		{
@@ -563,7 +568,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 
 					if (user == null)
 					{
-						user = new ApplicationUser()
+						user = new ApplicationUser(hashIds)
 						{
 							UserName = register.UserName,
 							NormalizedUserName = register.UserName.ToUpper(),
@@ -595,7 +600,7 @@ namespace ClaimsBasedIdentity.Web.UI.Controllers
 						user.Claims.Add(new ApplicationUserClaim()
 						{
 							UserId = id,
-							ClaimType = ClaimTypes.NameIdentifier, ClaimValue = id.ToString(), ClaimIssuer = issuer,
+							ClaimType = ClaimTypes.NameIdentifier, ClaimValue = hashIds.Encode(id), ClaimIssuer = issuer,
 							Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
 						});
 						user.Claims.Add(new ApplicationUserClaim()

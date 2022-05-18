@@ -1,124 +1,127 @@
 ﻿@using System.Security.Claims;
 @using ClaimsBasedIdentity.Data.POCO;
 @model ClaimsBasedIdentity.Web.UI.Models.ApplicationUserViewModel
+@{ 
+    string targetPage = ViewContext.RouteData.Values["Action"].ToString() == "EditProfile" ? "UserProfile" : "UserDetails";
+}
 
+@if ((bool)ViewData["AdminView"])
+{
+     <div class="row">
+          <div class="col-md-1 text-right">
+               <label><b>Roles:</b></label>
+          </div>
+          <div class="col-md-10 text-left">
+               <select id="selectRole" class="custom-select-sm col-md-2">
+                    @foreach (ApplicationRole role in Model.Roles)
+                    {
+                         <option value="@role.Id">@role.Name</option>
+                    }
+               </select>
+               <a id="add" class="btn btn-primary btn-sm col-md-1" href="#">Add</a>
+          </div>
+     </div>
+     <br />
+}
+<form id="form-content" class="form-horizontal bg-primary img-rounded col-md-12" method="post">
+     @Html.AntiForgeryToken()
+     <input type="hidden" name="User.Id" value="@Model.User.Id" />
+     <input type="hidden" name="User.NormalizedUserName" value="@Model.User.NormalizedUserName" />
+     <input type="hidden" name="User.NormalizedEmail" value="@Model.User.NormalizedEmail" />
+     <input type="hidden" id="emailConfirmed" name="User.EmailConfirmed" value="@Model.User.EmailConfirmed.ToString()" />
+     <input type="hidden" id="phoneConfirmed" name="User.PhoneNumberConfirmed" value="@Model.User.PhoneNumberConfirmed.ToString()" />
+     <input type="hidden" id="twoFactor" name="User.TwoFactorEnabled" value="@Model.User.TwoFactorEnabled.ToString()" />
+     <input type="hidden" name="User.PasswordHash" value="@Model.User.PasswordHash" />
+     <input type="hidden" name="User.Active" value="@Model.User.Active.ToString()" />
+     <input type="hidden" name="User.ModifiedDt" value="@Model.User.ModifiedDt" />
+     <input type="hidden" id="rolebadges" name="User.RoleBadges" value="@Model.User.RoleBadges" />
+     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+     <div class="form-group row">
+          <label asp-for="User.Id" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Id):</label>
+          <div class="col-md-3">
+               <input asp-for="User.Id" type="text" class="form-control form-control-sm" value='@Model.User.Id' disabled />
+          </div>
+     </div>
+     <div class="form-group row">
+          <label asp-for="User.UserName" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.UserName):</label>
+          <div class="col-md-3">
+               <input asp-for="User.UserName" type="text" class="form-control form-control-sm" value='@Model.User.UserName' />
+          </div>
+     </div>
+     <div class="form-group row">
+          <label asp-for="User.Email" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Email):</label>
+          <div class="col-md-3">
+               <input asp-for="User.Email" type="text" class="form-control form-control-sm" value='@Model.User.Email' />
+          </div>
+     </div>
+     <div class="form-group row">
+          <label asp-for="User.PhoneNumber" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.PhoneNumber):</label>
+          <div class="col-md-3">
+               <input asp-for="User.PhoneNumber" type="text" class="form-control form-control-sm" value='@Model.User.PhoneNumber' />
+          </div>
+     </div>
      @if ((bool)ViewData["AdminView"])
-	{
-          <div class="row">
-               <div class="col-md-1 text-right">
-                    <label><b>Roles:</b></label>
-               </div>
-               <div class="col-md-10 text-left">
-                    <select id="selectRole" class="custom-select-sm col-md-2">
-                         @foreach (ApplicationRole role in Model.Roles)
-					{
-                              <option value="@role.Id">@role.Name</option>
-					}
-                    </select>
-                    <a id="add" class="btn btn-primary btn-sm col-md-1" href="#">Add</a>
-               </div>
-          </div>
-          <br/>
-	}
-     <form id="form-content" class="form-horizontal bg-primary img-rounded col-md-12" method="post">
-          @Html.AntiForgeryToken()
-          <input type="hidden" name="User.Id" value="@Model.User.Id" />
-          <input type="hidden" name="User.NormalizedUserName" value="@Model.User.NormalizedUserName" />
-          <input type="hidden" name="User.NormalizedEmail" value="@Model.User.NormalizedEmail" />
-          <input type="hidden" id="emailConfirmed" name="User.EmailConfirmed" value="@Model.User.EmailConfirmed.ToString()" />
-          <input type="hidden" id="phoneConfirmed" name="User.PhoneNumberConfirmed" value="@Model.User.PhoneNumberConfirmed.ToString()" />
-          <input type="hidden" id="twoFactor" name="User.TwoFactorEnabled" value="@Model.User.TwoFactorEnabled.ToString()" />
-          <input type="hidden" name="User.PasswordHash" value="@Model.User.PasswordHash" />
-          <input type="hidden" name="User.Active" value="@Model.User.Active.ToString()" />
-          <input type="hidden" name="User.ModifiedDt" value="@Model.User.ModifiedDt" />
-          <input type="hidden" id="rolebadges" name="User.RoleBadges" value="@Model.User.RoleBadges" />
-          <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+     {
           <div class="form-group row">
-               <label asp-for="User.Id" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Id):</label>
-               <div class="col-md-3">
-                    <input asp-for="User.Id" type="text" class="form-control form-control-sm" value='@Model.User.Id' disabled />
+               <label asp-for="User.EmailConfirmed" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.EmailConfirmed):</label>
+               <div class="col-md-1">
+                    <input id="emailconfirmed" type="submit" class="col-md-12 btn btn-sm btn-success" value='@Model.User.EmailConfirmed.ToString()' />
                </div>
           </div>
           <div class="form-group row">
-               <label asp-for="User.UserName" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.UserName):</label>
-               <div class="col-md-3">
-                    <input asp-for="User.UserName" type="text" class="form-control form-control-sm" value='@Model.User.UserName' />
+               <label asp-for="User.PhoneNumberConfirmed" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.PhoneNumberConfirmed):</label>
+               <div class="col-md-1">
+                    <input id="phoneconfirmed" type="submit" class="col-md-12 btn btn-sm btn-success" value='@Model.User.PhoneNumberConfirmed.ToString()' />
                </div>
           </div>
           <div class="form-group row">
-               <label asp-for="User.Email" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Email):</label>
-               <div class="col-md-3">
-                    <input asp-for="User.Email" type="text" class="form-control form-control-sm" value='@Model.User.Email' />
+               <label asp-for="User.TwoFactorEnabled" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.TwoFactorEnabled):</label>
+               <div class="col-md-1">
+                    <input id="twofactor" type="submit" class="col-md-12 btn btn-sm btn-success" value='@Model.User.TwoFactorEnabled.ToString()' />
                </div>
           </div>
-          <div class="form-group row">
-               <label asp-for="User.PhoneNumber" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.PhoneNumber):</label>
-               <div class="col-md-3">
-                    <input asp-for="User.PhoneNumber" type="text" class="form-control form-control-sm" value='@Model.User.PhoneNumber' />
-               </div>
+     }
+     <div class="form-group row">
+          <label class="col-md-2 control-label">Password:</label>
+          <div class="col-md-3">
+               <a href="/Account/ChangePassword" class="btn btn-success btn-sm">Change Password</a>
           </div>
-          @if ((bool)ViewData["AdminView"])
-		{
-               <div class="form-group row">
-                    <label asp-for="User.EmailConfirmed" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.EmailConfirmed):</label>
-                    <div class="col-md-1">
-                         <input id="emailconfirmed" type="submit" class="col-md-12 btn btn-sm btn-success" value='@Model.User.EmailConfirmed.ToString()' />
-                    </div>
-               </div>
-               <div class="form-group row">
-                    <label asp-for="User.PhoneNumberConfirmed" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.PhoneNumberConfirmed):</label>
-                    <div class="col-md-1">
-                         <input id="phoneconfirmed" type="submit" class="col-md-12 btn btn-sm btn-success" value='@Model.User.PhoneNumberConfirmed.ToString()' />
-                    </div>
-               </div>
-               <div class="form-group row">
-                    <label asp-for="User.TwoFactorEnabled" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.TwoFactorEnabled):</label>
-                    <div class="col-md-1">
-                         <input id="twofactor" type="submit" class="col-md-12 btn btn-sm btn-success" value='@Model.User.TwoFactorEnabled.ToString()' />
-                    </div>
-               </div>
-		}
-	     <div class="form-group row">
-		     <label class="col-md-2 control-label">Password:</label>
-			<div class="col-md-3">
-				<a href="/Account/ChangePassword" class="btn btn-success btn-sm">Change Password</a>
-			</div>
-	     </div>
-          <div class="form-group row">
-               <label asp-for="User.DOB" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.DOB):</label>
-               <div class="col-md-3">
-                    <input asp-for="User.DOB" type="datetime" class="form-control form-control-sm" value='@Model.User.DOB.ToString("MM/dd/yyyy")' />
-               </div>
+     </div>
+     <div class="form-group row">
+          <label asp-for="User.DOB" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.DOB):</label>
+          <div class="col-md-3">
+               <input asp-for="User.DOB" type="datetime" class="form-control form-control-sm" value='@Model.User.DOB.ToString("MM/dd/yyyy")' />
           </div>
-          <div class="form-group row">
-               <label asp-for="User.Department" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Department):</label>
-               <div class="col-md-3">
-                    <input asp-for="User.Department" type="text" class="form-control form-control-sm" value='@Model.User.Department' />
-               </div>
+     </div>
+     <div class="form-group row">
+          <label asp-for="User.Department" class="col-md-2 control-label">@Html.DisplayNameFor(m => m.User.Department):</label>
+          <div class="col-md-3">
+               <input asp-for="User.Department" type="text" class="form-control form-control-sm" value='@Model.User.Department' />
           </div>
-          <div class="form-group row">
-               <label class="col-md-2 control-label">Roles:</label>
-			<div id="roles" class="col-md-10">
-				@{int cnt = 1;
-				  foreach (ApplicationUserClaim c in Model.User.Claims.Where(r => r.ClaimType == ClaimTypes.Role))
-				  {
-     				<a href="#" class="roleLinks"><h4><span id="@String.Format("{0}-{1}", c.Id , c.ClaimValue)" class="badge badge-pill badge-success">@c.ClaimValue</span></h4></a>
-					cnt++;
-				  }
-				}
-			</div>
-          </div>
-          <div class="form-group row">
-               <div class="col-md-10 col-md-push-1">
-                    <input id="submit" class="btn btn-success btn-sm" type="submit" value="Save" />
-                    @if ((bool)ViewData["AdminView"])
+     </div>
+     <div class="form-group row">
+          <label class="col-md-2 control-label">Roles:</label>
+          <div id="roles" class="col-md-10">
+               @{int cnt = 1;
+                    foreach (ApplicationUserClaim c in Model.User.Claims.Where(r => r.ClaimType == ClaimTypes.Role))
                     {
-                         <a class="btn btn-danger btn-sm" id="cancel" name="cancel" href="/Account/Index">Cancel</a>
+                         <a href="#" class="roleLinks"><h4><span id="@String.Format("{0}-{1}", c.Id, c.ClaimValue)" class="badge badge-pill badge-success">@c.ClaimValue</span></h4></a>
+                         cnt++;
                     }
-                    else
-                    {
-                         <a class="btn btn-danger btn-sm" id="cancel" name="cancel" href="/Home/LoginSuccess">Cancel</a>
-                    }
-               </div>
+               }
           </div>
-     </form>
+     </div>
+     <div class="form-group row">
+          <div class="col-md-10 col-md-push-1">
+               <input id="submit" class="btn btn-success btn-sm" type="submit" value="Save" />
+               @if ((bool)ViewData["AdminView"])
+               {
+                    <a class="btn btn-danger btn-sm" id="cancel" name="cancel" href="/Account/Index">Cancel</a>
+               }
+               else
+               {
+                    <a class="btn btn-danger btn-sm" id="cancel" name="cancel" href="/Account/@targetPage/@Model.User.HashId">Cancel</a>
+               }
+          </div>
+     </div>
+</form>

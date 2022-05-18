@@ -6,11 +6,14 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using ClaimsBasedIdentity.Data;
 using ClaimsBasedIdentity.Data.Interfaces;
+using HashidsNet;
 
 namespace ClaimsBasedIdentity.Data.POCO
 {
 	public class ApplicationUser
 	{
+		private IHashids hashIds;
+
 		public PrimaryKey PK { get; set; }
 		public int Id
 		{
@@ -40,13 +43,27 @@ namespace ClaimsBasedIdentity.Data.POCO
 		public DateTime ModifiedDt { get; set; }
 		public DateTime CreateDt { get; set; }
 
+		// Required by MVC Controllers for Model Binding in HTTP Post requests
 		public ApplicationUser()
 		{
 			PK = new PrimaryKey() { Key = -1, IsIdentity = true };
 		}
+
+		// Use this everywhere else
+		public ApplicationUser(IHashids h)
+		{
+			hashIds = h;
+			PK = new PrimaryKey() { Key = -1, IsIdentity = true };
+		}
+
+		public string HashId 
+		{ 
+			get { return hashIds.Encode(Id); }
+        }
+
 		public override string ToString()
 		{
-			return $"{Id}|{UserName}|{NormalizedUserName}|{Email}|{NormalizedEmail}|{EmailConfirmed}|{PasswordHash}|{PhoneNumber}|{PhoneNumberConfirmed}|{TwoFactorEnabled}|{Department}|{DOB}|{Active}|{ModifiedDt}|{CreateDt}|";
+			return $"{Id}|{HashId}|{UserName}|{NormalizedUserName}|{Email}|{NormalizedEmail}|{EmailConfirmed}|{PasswordHash}|{PhoneNumber}|{PhoneNumberConfirmed}|{TwoFactorEnabled}|{Department}|{DOB}|{Active}|{ModifiedDt}|{CreateDt}|";
 		}
 
 		//Relation properties

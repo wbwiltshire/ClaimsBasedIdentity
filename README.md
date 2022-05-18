@@ -11,6 +11,11 @@ A sample ASP.Net Core web application which implements a light-weight Policy and
 
 User POCO is based on ClaimsPrincipal class ()
 
+Hash Ids
+---
+
+Use the HashIDs.Net library for secure, public facing User Ids.  Strategy is convert between the two (ApplicationUser Id and HashId) in cases when a user may see it (e.g. URLs)
+
 Links
 ---
   * [ASP.NET Core Identity video series](https://www.youtube.com/watch?v=Fhfvbl_KbWo)
@@ -20,6 +25,7 @@ Links
   * [Custom Authorization Policies and Requirements in ASP.Net Core](https://andrewlock.net/custom-authorisation-policies-and-requirements-in-asp-net-core/)
   * [ASP.NET Core Authorization Lab](https://github.com/blowdart/AspNetAuthorizationWorkshop)
   * [Retrieve the current user in an ASP.NET Core app](https://docs.microsoft.com/en-us/aspnet/core/migration/claimsprincipal-current)
+  * [HashIds.Net](https://github.com/ullmark/hashids.net)
   * [Bootstrap 4](https://getbootstrap.com/)
   * [Handlebars](https://handlebarsjs.com/)
   * [Repository pattern using SQL Server](https://github.com/wbwiltshire/SQLRepositoryAsync)

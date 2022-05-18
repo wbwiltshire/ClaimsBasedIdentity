@@ -7,7 +7,7 @@
 			<li class="nav-item dropdown">
 				<a class="nav-link dropdown-toggle" href="#" id="navbarUser" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">@Context.User.Identity.Name</a>
 				<div class="dropdown-menu" aria-labelledby="navbarUser">
-					<a class="dropdown-item" href="/Account/UserProfile/@Context.User.Identity.UserId()">Profile</a>
+					<a class="dropdown-item" href="/Account/UserProfile/@Context.User.Identity.HashId()">Profile</a>
 					<a id="logout" class="dropdown-item" href="#">Logout</a>
 				</div>
 			</li>

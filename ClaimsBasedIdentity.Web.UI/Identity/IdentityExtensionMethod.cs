@@ -9,21 +9,39 @@ namespace ClaimsBasedIdentity.Web.UI.Identity
 {
     public static class IdentityExtensionMethod
     {
-        public static int UserId(this IIdentity identity)
+        // Deprecated: Don't expose the Id of the ApplicationUser, because it makes them easy to guess someone elses
+        //public static int UserId(this IIdentity identity)
+        //{
+        //    if (identity == null)
+        //        return -1;
+
+        //    int id = (identity as ClaimsIdentity).GetUserId(ClaimTypes.NameIdentifier);
+
+        //    return id;
+        //}
+
+        //internal static int GetUserId(this ClaimsIdentity identity, string claimType)
+        //{
+        //    var val = identity.FindFirst(claimType);
+
+        //    return val == null ? -1 : Convert.ToInt32(val.Value);
+        //}
+
+        public static string HashId(this IIdentity identity)
         {
             if (identity == null)
-                return -1;
+                return null;
 
-            int id = (identity as ClaimsIdentity).GetUserId(ClaimTypes.NameIdentifier);
+            string id = (identity as ClaimsIdentity).GetHashId(ClaimTypes.NameIdentifier);
 
             return id;
         }
 
-        internal static int GetUserId(this ClaimsIdentity identity, string claimType)
+        internal static string GetHashId(this ClaimsIdentity identity, string claimType)
         {
-            var val = identity.FindFirst(claimType);
+            Claim val = identity.FindFirst(claimType);
 
-            return val == null ? -1 : Convert.ToInt32(val.Value);
+            return val is null ? null : val.Value;
         }
     }
 }

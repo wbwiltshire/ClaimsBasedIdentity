@@ -33,13 +33,13 @@
                <tbody id="UserList">
                     @foreach (ClaimsBasedIdentity.Data.POCO.ApplicationUser u in Model.Entities)
                     {
-                         <tr id="@u.Id">
+                         <tr id="@u.HashId">
                               <td>@u.UserName</td>
                               <td>@u.Email</td>
                               <td>@u.PhoneNumber</td>
-                              <td class="action"><a href="/Account/UserDetails/@u.Id" data-toggle="tooltip" title="Details"><i class="fa fa-file-text-o" aria-hidden="true"></i></a></td>
-                              <td class="action"><a href="/Account/EditUser/@u.Id" data-toggle="tooltip" title="Edit"><i class="fa fa-edit" aria-hidden="true"></i></a></td>
-                              <td class="action"><a href="/Account/Delete/@u.Id" data-toggle="tooltip" title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></a></td>
+                              <td class="action"><a href="/Account/UserDetails/@u.HashId" data-toggle="tooltip" title="Details"><i class="fa fa-file-text-o" aria-hidden="true"></i></a></td>
+                              <td class="action"><a href="/Account/EditUser/@u.HashId" data-toggle="tooltip" title="Edit"><i class="fa fa-edit" aria-hidden="true"></i></a></td>
+                              <td class="action"><a href="/Account/Delete/@u.HashId" data-toggle="tooltip" title="Delete"><i class="fa fa-trash" aria-hidden="true"></i></a></td>
                          </tr>
                     }
                     @if (Model.Entities.Count == 0)

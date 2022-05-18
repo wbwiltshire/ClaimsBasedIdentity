@@ -48,7 +48,8 @@ namespace ClaimsBasedIdentity.Data.Repository
 
         public override ApplicationUser FindByPK(IPrimaryKey pk)
         {
-            return base.FindByPK(pk);
+            ApplicationUser user = base.FindByPK(pk);
+            return user;
         }
 
         public ApplicationUser FindByPKView(IPrimaryKey pk)

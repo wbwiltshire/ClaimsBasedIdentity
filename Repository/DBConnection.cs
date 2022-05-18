@@ -7,6 +7,7 @@ using System.Text;
 using ClaimsBasedIdentity.Data.Interfaces;
 using ClaimsBasedIdentity.Data.POCO;
 using Newtonsoft.Json;
+using HashidsNet;
 
 namespace ClaimsBasedIdentity.Data.Repository
 {
@@ -18,9 +19,11 @@ namespace ClaimsBasedIdentity.Data.Repository
         private ICollection<ApplicationControllerSecurity> controllerSecurity = null;
         private ICollection<ApplicationRole> roles { get; set; }
         private ICollection<ApplicationAuditLog> logs { get; set; }
+        private IHashids hashIds { get; set; }
 
-        public DBConnection()
+        public DBConnection(IHashids h)
         {
+            hashIds = h;
             IsOpen = false;
             Load();
         }
@@ -184,7 +187,7 @@ namespace ClaimsBasedIdentity.Data.Repository
         {
             // Admin User
             users = new List<ApplicationUser>();
-            users.Add(new ApplicationUser()
+            users.Add(new ApplicationUser(hashIds)
             {
                 PK = new PrimaryKey() { Key = 1, IsIdentity = true },
                 UserName = "Admin",
@@ -203,6 +206,8 @@ namespace ClaimsBasedIdentity.Data.Repository
             
             #region User Claims
             userClaims = new List<ApplicationUserClaim>();
+
+            // ClaimType: User Name
             userClaims.Add(new ApplicationUserClaim()
             {
                 PK = new PrimaryKey() { Key = 1, IsIdentity = true },
@@ -214,17 +219,21 @@ namespace ClaimsBasedIdentity.Data.Repository
                 ModifiedDt = DateTime.Now,
                 CreateDt = DateTime.Now
             });
+
+            // ClaimType: Name Id - should be Hash Id based on User Id
             userClaims.Add(new ApplicationUserClaim()
             {
                 PK = new PrimaryKey() { Key = 2, IsIdentity = true },
                 UserId = 1,
                 ClaimType = ClaimTypes.NameIdentifier,
-                ClaimValue = "1",
+                ClaimValue = hashIds.Encode(1),
                 ClaimIssuer = "Local Authority",
                 Active = true,
                 ModifiedDt = DateTime.Now,
                 CreateDt = DateTime.Now
             });
+
+            // ClaimType: User Role
             userClaims.Add(new ApplicationUserClaim() {
                 PK = new PrimaryKey() { Key = 3, IsIdentity = true },
                 UserId = 1,
@@ -233,6 +242,8 @@ namespace ClaimsBasedIdentity.Data.Repository
                 ClaimIssuer = "Local Authority",
                 Active = true, ModifiedDt = DateTime.Now, CreateDt = DateTime.Now
             });
+
+            // ClaimType: User DOB 
             userClaims.Add(new ApplicationUserClaim()
             {
                 PK = new PrimaryKey() { Key = 4, IsIdentity = true },
